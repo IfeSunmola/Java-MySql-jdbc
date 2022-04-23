@@ -1,3 +1,5 @@
 .idea
 out
 SocialAppName.iml
+target
+src/main/java/TestClass.java
