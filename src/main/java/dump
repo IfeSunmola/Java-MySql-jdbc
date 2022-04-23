@@ -1,0 +1,15 @@
+    private static Connection getRemoteConnection() {
+        Connection connection;
+        try {
+            Class.forName("com.mysql.cj.jdbc.Driver");
+            connection = DriverManager.getConnection(
+                    "jdbc:mysql://69we9aa28bv9.us-east-2.psdb.cloud/users_db?sslMode=VERIFY_IDENTITY",
+                    "5dsh60xkmae7",
+                    "pscale_pw_cqyY8Y6jUm18R7c62PQY3ovVDj5JGJ0AdQzgBQ3iP3I");
+            System.out.println("Connection successful");
+        }
+        catch (ClassNotFoundException | SQLException e) {
+            throw new RuntimeException(e);
+        }
+        return connection;
+    }
