@@ -2,11 +2,12 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.sql.*;
-import java.util.Random;
 
 import com.twilio.Twilio;
 import com.twilio.rest.api.v2010.account.Message;
 import com.twilio.type.PhoneNumber;
+
+
 
 //set classpath=mysql-connector-java-8.0.28.jar;twilio-8.29.1-jar-with-dependencies.jar
 //set classpath=mysql-connector-java-8.0.28.jar
@@ -15,6 +16,7 @@ import com.twilio.type.PhoneNumber;
  *Todo:
  * add error checking, validations when creating accounts
  * create account/log in with github
+ * don't let the user have to keep logging in everytime
  * */
 
 public class Main {
@@ -22,18 +24,6 @@ public class Main {
         Connection connection = getConnection();
         createTable(connection);
 
-//        final String ACCOUNT_SID = "ACe3f8ca303562d86655d7f9af76b6aa92";
-//        final String AUTH_TOKEN = "836a3819824da9268358d26b3298df76";
-//        final String TWILIO_PHONE_NUMBER = "(587)404-4531";
-//
-//        Twilio.init(ACCOUNT_SID, AUTH_TOKEN);
-//        Message message = Message.creator(
-//                new PhoneNumber("204-698-4178"),
-//                new PhoneNumber(TWILIO_PHONE_NUMBER),
-//                "This is a test message"
-//        ).create();
-
-//        System.out.println(message.getSid());
 
         System.out.println(mainMenu());
         try (BufferedReader inputReader = new BufferedReader(new InputStreamReader(System.in))) {
@@ -141,7 +131,6 @@ public class Main {
         System.out.println("------------------------------------------");
     }
 
-
     private static String getVerificationCode() {
         String result = "";
         int min = 0, max = 9;
@@ -182,19 +171,18 @@ public class Main {
             final String ACCOUNT_SID = "ACe3f8ca303562d86655d7f9af76b6aa92";
             final String AUTH_TOKEN = "836a3819824da9268358d26b3298df76";
             final String TWILIO_PHONE_NUMBER = "(587)404-4531";
+            Twilio.init(ACCOUNT_SID, AUTH_TOKEN);
 
             String code = getVerificationCode();
-            System.out.println("Num is: " + userPhoneNumber);
             userPhoneNumber = formatPhoneNumber(userPhoneNumber);
-            System.out.println("Num is: " + userPhoneNumber);
-            Twilio.init(ACCOUNT_SID, AUTH_TOKEN);
+
             Message message = Message.creator(
                     new PhoneNumber(userPhoneNumber),
                     new PhoneNumber(TWILIO_PHONE_NUMBER),
                     "Verification code is: " + code
             ).create();
 
-            System.out.println("Enter the verification code that was sent: ");
+            System.out.print("Enter the verification code that was sent: ");
             String userCode = inputReader.readLine();
 
             if (userCode.equals(code)) {
