@@ -14,16 +14,29 @@
     </properties>
 
     <dependencies>
+        <!--        twilio-->
         <dependency>
             <groupId>com.twilio.sdk</groupId>
             <artifactId>twilio</artifactId>
             <version>8.29.1</version>
         </dependency>
-
+        <!--    mysql-connector-->
         <dependency>
             <groupId>mysql</groupId>
             <artifactId>mysql-connector-java</artifactId>
             <version>8.0.28</version>
+        </dependency>
+        <!--        to remove a stupid warning-->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>1.7.36</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+            <version>1.7.36</version>
         </dependency>
     </dependencies>
 </project>
