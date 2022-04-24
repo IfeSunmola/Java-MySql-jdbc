@@ -1,22 +1,21 @@
+import com.twilio.Twilio;
+import com.twilio.rest.api.v2010.account.Message;
+import com.twilio.type.PhoneNumber;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.sql.*;
 
-import com.twilio.Twilio;
-import com.twilio.rest.api.v2010.account.Message;
-import com.twilio.type.PhoneNumber;
+import static utilities.Util.*;
 
-
-
-//set classpath=mysql-connector-java-8.0.28.jar;twilio-8.29.1-jar-with-dependencies.jar
-//set classpath=mysql-connector-java-8.0.28.jar
-//set classpath=mysql-connector-java-8.0.28.jar;twilio-8.29.1.jar
 /*
- *Todo:
- * add error checking, validations when creating accounts
- * create account/log in with github
- * don't let the user have to keep logging in everytime
+ * Todo:
+ *  add error checking, validations when creating accounts
+ *  create account/log in with github
+ *  don't let the user have to keep logging in everytime
+ *  strip names and user input
+ *  change gender to show all options
  * */
 
 public class Main {
@@ -49,152 +48,71 @@ public class Main {
                     default -> System.out.println("Make a valid selection");
                 }
             }
+            connection.close();
         }
         catch (IOException | SQLException e) {
             e.printStackTrace();
         }
     }
 
-    private static Connection getConnection() {
-        Connection connection; //null will be returned if it could not be connected
-        try {
-            String driver = "com.mysql.cj.jdbc.Driver";
-            String url = "jdbc:mysql://localhost:3306/users_db";
-            String username = "root";
-            String password = "password";
-
-            Class.forName(driver);
-
-            connection = DriverManager.getConnection(url, username, password);
-            System.out.println("Connection successful");
-        }
-        catch (ClassNotFoundException | SQLException e) {
-            throw new RuntimeException(e);
-        }
-
-        return connection;
-    }
-
-    public static void createTable(Connection connection) {
-        try {
-            // if this table does not exist in the database, create it
-            PreparedStatement create = connection.prepareStatement(
-                    """
-                            CREATE TABLE IF NOT EXISTS users_table(
-                            user_id INT PRIMARY KEY AUTO_INCREMENT UNIQUE,
-                            user_name VARCHAR(20) NOT NULL,
-                            date_of_birth DATE NOT NULL,
-                            age INT NOT NULL,
-                            phone_number VARCHAR(20) UNIQUE,
-                            gender VARCHAR(20) NOT NULL
-                            );""");
-            create.executeUpdate();
-        }
-        catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private static String mainMenu() {
-        return """
-                ----Make Meaningful Conversations----
-                Select an option, 1 or 2 (enter 0 to quit):\s
-                1. Create an account
-                2. Log in to an existing account
-                """;
-    }
-
     private static void createAnAccount(BufferedReader inputReader, Connection connection) throws IOException, SQLException {
-        System.out.println("**Creating an account**");
+        System.out.println("** Creating an account **");
+        String name = getName(inputReader);
+        System.out.println("--------------");
+        String dateOfBirth = getDateOfBirth(inputReader);
+        System.out.println("--------------");
+        String phoneNumber = getPhoneNumber(inputReader);
+        System.out.println("--------------");
+        String gender = getGenderIdentity(inputReader);
 
-        System.out.print("Name: ");
-        String name = inputReader.readLine();
+        if (!numberExistsInDB(phoneNumber, connection)) {
+            PreparedStatement addUser = connection.prepareStatement(
+                    "INSERT INTO users_table " +
+                            "(user_name, date_of_birth, age, phone_number, gender) " +
+                            "VALUES('" + name + "', '" + dateOfBirth + "', TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()),  '" +
+                            phoneNumber + "', '" + gender + "');");
+            addUser.executeUpdate();
 
-        System.out.print("Date of Birth (YYYY-MM-DD): ");
-        String dateOfBirth = inputReader.readLine();
-
-        System.out.print("Phone Number(verification code will be sent here): ");
-        String phoneNumber = inputReader.readLine();
-
-        System.out.print("Gender that best suits you: ");
-        String gender = inputReader.readLine();
-
-        PreparedStatement addUser = connection.prepareStatement(
-                "INSERT INTO users_table " +
-                        "(user_name, date_of_birth, age, phone_number, gender) " +
-                        "VALUES('" + name + "', '" + dateOfBirth + "', TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()),  '" +
-                        phoneNumber + "', '" + gender + "');");
-        addUser.executeUpdate();
-
-        System.out.println("------------------------------------------");
-        System.out.println("Account created Successfully");
-        System.out.println("------------------------------------------");
-    }
-
-    private static String getVerificationCode() {
-        String result = "";
-        int min = 0, max = 9;
-        for (int i = 0; i < 5; i++) {
-            result += (int) Math.floor(Math.random() * (max - min + 1) + min);
+            System.out.println("------------------------------------------");
+            System.out.println("Account created Successfully");
+            System.out.println("------------------------------------------");
         }
-        return result;
-    }
-
-    private static String formatPhoneNumber(String numberToFormat) {
-        numberToFormat = numberToFormat.replaceFirst("-", "");
-        String newPhoneNumber = "(";
-        for (int i = 0; i < numberToFormat.length(); i++) {
-            char curr = numberToFormat.charAt(i);
-            newPhoneNumber += curr;
-            if (i == 2) {
-                newPhoneNumber += ") ";
-            }
+        else {
+            System.out.println("You already have an account. Log in instead.");
         }
-        return newPhoneNumber;
+
     }
 
     private static void login(BufferedReader inputReader, Connection connection) throws IOException, SQLException {
-        System.out.println("**Login to an existing account**");
+        System.out.println("** Login to an existing account **");
+        String userPhoneNumber = getPhoneNumber(inputReader);
 
-        System.out.print("Enter your phone number: ");
-        String userPhoneNumber = inputReader.readLine();
-
-        PreparedStatement getPhoneNumber = connection.prepareStatement("SELECT * FROM users_table WHERE phone_number= '" + userPhoneNumber + "';");
-
-        ResultSet result = getPhoneNumber.executeQuery();
-        String numberInDb = "";
-        if (result.next()) {
-            numberInDb = result.getString("phone_number");
-        }
-
-        if (numberInDb.equals(userPhoneNumber)) {// if the phone number was found in the database
-            final String ACCOUNT_SID = "ACe3f8ca303562d86655d7f9af76b6aa92";
-            final String AUTH_TOKEN = "836a3819824da9268358d26b3298df76";
-            final String TWILIO_PHONE_NUMBER = "(587)404-4531";
+        if (numberExistsInDB(userPhoneNumber, connection)) {
+            final String ACCOUNT_SID = System.getenv("TWILIO_ACCOUNT_SID");
+            final String AUTH_TOKEN = System.getenv("TWILIO_AUTH_TOKEN");
+            final String PHONE_NUMBER = System.getenv("TWILIO_PHONE_NUMBER");
             Twilio.init(ACCOUNT_SID, AUTH_TOKEN);
 
             String code = getVerificationCode();
-            userPhoneNumber = formatPhoneNumber(userPhoneNumber);
 
             Message message = Message.creator(
                     new PhoneNumber(userPhoneNumber),
-                    new PhoneNumber(TWILIO_PHONE_NUMBER),
+                    new PhoneNumber(PHONE_NUMBER),
                     "Verification code is: " + code
             ).create();
-
             System.out.print("Enter the verification code that was sent: ");
             String userCode = inputReader.readLine();
 
             if (userCode.equals(code)) {
-                System.out.println("Log in successful");
+                System.out.println("Account found, Log in successful");
             }
             else {
                 System.out.println("Wrong code. Log in failed.");
             }
-
         }
         else {
-            System.out.println("Account not found");
+            System.out.println("Account not found. Log in failed");
         }
     }
+
 }
