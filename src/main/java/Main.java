@@ -7,7 +7,9 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.sql.*;
 
-import static utilities.Util.*;
+import static utilities.UserInputUtil.*;
+import static utilities.DatabaseUtil.*;
+import static utilities.ValidateUtil.*;
 
 /*
  * Todo:
