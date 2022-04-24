@@ -1,9 +1,16 @@
 package utilities;
 
 /**
- * Contains all the methods that will be used in validating a user
+ * This class contains all the methods that will be used to validate the user
+ *
+ * @author Ife Sunmola
  */
 public final class ValidateUtil {
+    /**
+     * Method to generate a 5 number verification code
+     *
+     * @return String containing a random 5 digits code
+     */
     public static String getVerificationCode() {
         StringBuilder result = new StringBuilder();
         int min = 0, max = 9;
