@@ -41,6 +41,10 @@ public class Main {
                         login(inputReader, connection);
                         selectionWasValid = true;
                     }
+                    case "3" -> {
+                        deleteAnAccount(inputReader, connection);
+                        selectionWasValid = true;
+                    }
                     case "0" -> {
                         System.out.println("Have a nice day");
                         selectionWasValid = true;
@@ -114,5 +118,37 @@ public class Main {
             System.out.println("Account not found. Log in failed");
         }
     }
+
+    private static void deleteAnAccount(BufferedReader inputReader, Connection connection) throws IOException, SQLException {
+        System.out.println("** Deleting an account **");
+        String phoneNumber = getPhoneNumber(inputReader);
+        if (numberExistsInDB(phoneNumber, connection)) {
+            String userInput = "";
+            while (!userInput.equals("Y") && !userInput.equals("N")) {
+                System.out.println("YOUR ACCOUNT CANNOT BE RECOVERED AFTER DELETION");
+                System.out.print("Are you sure you want to delete your account? This process is IRREVERSIBLE (y/n): ");
+                userInput = inputReader.readLine().toUpperCase();
+
+                // if userInput = y or n, the code below will run once and exit
+                if (userInput.equals("Y")) {
+                    PreparedStatement deleteUser = connection.prepareStatement(
+                            "DELETE FROM users_table WHERE phone_number = '" + phoneNumber + "';");
+                    if (deleteUser.executeUpdate() > 0) {
+                        System.out.println("Account deleted successfully");
+                    }
+                    else {
+                        System.out.println("Account could not be deleted");
+                    }
+                }
+                else {
+                    System.out.println("Account not deleted");
+                }
+            }
+        }
+        else {
+            System.out.println("Account not found. Delete failed");
+        }
+    }
+
 
 }
