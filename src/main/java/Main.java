@@ -21,7 +21,7 @@ import static utilities.ValidateUtil.*;
  * */
 
 /**
- * Main/Driver class
+ * Main/Driver class for local server
  *
  * @author Ife Sunmola
  */
@@ -30,6 +30,10 @@ public class Main {
         System.out.println(mainMenu());
         // no need to close inputReader and connection since the try is used like this
         try (BufferedReader inputReader = new BufferedReader(new InputStreamReader(System.in)); Connection connection = getConnection()) {
+            if (connection == null){
+                System.out.println("Connection failed.");
+                return;
+            }
             createUsersTable(connection);
             boolean selectionWasValid = false;
             String userInput;

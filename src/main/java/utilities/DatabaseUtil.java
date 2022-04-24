@@ -11,7 +11,6 @@ import java.sql.*;
 public final class DatabaseUtil {
     /**
      * Method to connect to the database. The data needed (driver, url, etc.) is saved in environment variables.
-     * An error message will print the connection status.
      *
      * @return Connection object a connection was formed OR null if a connection could not be formed.
      * @throws SQLException           if there was a problem with the sql server itself
@@ -26,14 +25,7 @@ public final class DatabaseUtil {
         String password = System.getenv("SQL_PASSWORD");
 
         Class.forName(driver);
-
         connection = DriverManager.getConnection(url, username, password);
-        if (connection == null) {
-            System.out.println("Connection FAILED");
-        }
-        else {
-            System.out.println("Connection SUCCESSFUL");
-        }
         return connection;
     }
 
