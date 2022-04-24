@@ -3,3 +3,6 @@ out
 JavaAndMySql.iml
 target
 src/main/java/TestClass.java
+src/main/java/dump
+src/main/java/RegisteredUsers.java
+src/main/java/User.java
