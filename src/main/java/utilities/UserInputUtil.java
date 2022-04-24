@@ -16,6 +16,7 @@ import java.time.temporal.ChronoUnit;
 public final class UserInputUtil {
     private static final int MIN_AGE = 18;// minimum and
     private static final int MAX_AGE = 99;// maximum age a user should be
+    private static final String CHAR_LIMIT = "(>= 2 characters and <= 10 characters)";
 
     // menu options
 
@@ -58,7 +59,7 @@ public final class UserInputUtil {
     public static String getName(BufferedReader inputReader) throws IOException {
         String name = "";
         while (!isValidNameOrGender(name)) {// keep asking for a name till a valid name is entered
-            System.out.print("Name (> 2 characters and < 10 characters): ");
+            System.out.print("Name " + CHAR_LIMIT + ": ");
             name = inputReader.readLine().strip();
         }
         return name;
@@ -129,7 +130,7 @@ public final class UserInputUtil {
                 }
                 case "4" -> {
                     while (!isValidNameOrGender(gender)) {
-                        System.out.print("Gender identity (> 2 characters and < 10 characters): ");
+                        System.out.print("Gender identity " + CHAR_LIMIT + ": ");
                         gender = inputReader.readLine().strip();
                     }
                     selectionWasValid = true;
@@ -149,7 +150,7 @@ public final class UserInputUtil {
      * @return True if the parameter's length > 2 and < 10
      */
     private static boolean isValidNameOrGender(String toCheck) {
-        return toCheck.length() > 2 && toCheck.length() < 10;
+        return toCheck.length() >= 2 && toCheck.length() <= 10;
     }
 
     /**
