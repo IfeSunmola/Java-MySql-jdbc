@@ -45,15 +45,15 @@ public final class DatabaseUtil {
      * @throws SQLException if there was a problem with the sql server itself.
      */
     public static void createUsersTable(Connection connection) throws SQLException {
-        // if this table does not exist in the database, create it
+        // if users_table does not exist in the database, create it
         PreparedStatement create = connection.prepareStatement(
                 """
                         CREATE TABLE IF NOT EXISTS users_table(
-                        user_id INT PRIMARY KEY AUTO_INCREMENT UNIQUE,
-                        user_name VARCHAR(20) NOT NULL,
+                        user_id INT AUTO_INCREMENT UNIQUE NOT NULL,
+                        user_name VARCHAR(10) NOT NULL,
                         date_of_birth DATE NOT NULL,
                         age INT NOT NULL,
-                        phone_number VARCHAR(10) UNIQUE,
+                        phone_number VARCHAR(10) PRIMARY KEY UNIQUE NOT NULL,
                         gender VARCHAR(10) NOT NULL
                         );""");
         create.executeUpdate();
