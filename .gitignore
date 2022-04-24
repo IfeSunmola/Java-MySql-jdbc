@@ -1,6 +1,7 @@
 .idea
 out
-JavaAndMySql.iml
 target
 src/main/java/TestClass.java
 src/main/java/dump
+JavaAndMySql.iml
+src/main/resources
