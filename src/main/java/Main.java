@@ -11,7 +11,6 @@ import static utilities.Util.*;
 
 /*
  * Todo:
- *  add error checking, validations when creating accounts
  *  create account/log in with github
  *  don't let the user have to keep logging in everytime
  *  strip names and user input
@@ -31,10 +30,10 @@ public class Main {
 
             while (!selectionWasValid) {
                 System.out.print("Your response: ");
-                userInput = inputReader.readLine();
+                userInput = inputReader.readLine().strip();
                 switch (userInput) {
                     case "1" -> {
-                        createAnAccount(inputReader, connection);
+                        createAccount(inputReader, connection);
                         selectionWasValid = true;
                     }
                     case "2" -> {
@@ -42,7 +41,7 @@ public class Main {
                         selectionWasValid = true;
                     }
                     case "3" -> {
-                        deleteAnAccount(inputReader, connection);
+                        deleteAccount(inputReader, connection);
                         selectionWasValid = true;
                     }
                     case "0" -> {
@@ -59,7 +58,7 @@ public class Main {
         }
     }
 
-    private static void createAnAccount(BufferedReader inputReader, Connection connection) throws IOException, SQLException {
+    private static void createAccount(BufferedReader inputReader, Connection connection) throws IOException, SQLException {
         System.out.println("** Creating an account **");
         String name = getName(inputReader);
         System.out.println("--------------");
@@ -105,7 +104,7 @@ public class Main {
                     "Verification code is: " + code
             ).create();
             System.out.print("Enter the verification code that was sent: ");
-            String userCode = inputReader.readLine();
+            String userCode = inputReader.readLine().strip();
 
             if (userCode.equals(code)) {
                 System.out.println("Account found, Log in successful");
@@ -119,7 +118,7 @@ public class Main {
         }
     }
 
-    private static void deleteAnAccount(BufferedReader inputReader, Connection connection) throws IOException, SQLException {
+    private static void deleteAccount(BufferedReader inputReader, Connection connection) throws IOException, SQLException {
         System.out.println("** Deleting an account **");
         String phoneNumber = getPhoneNumber(inputReader);
         if (numberExistsInDB(phoneNumber, connection)) {
@@ -127,28 +126,25 @@ public class Main {
             while (!userInput.equals("Y") && !userInput.equals("N")) {
                 System.out.println("YOUR ACCOUNT CANNOT BE RECOVERED AFTER DELETION");
                 System.out.print("Are you sure you want to delete your account? This process is IRREVERSIBLE (y/n): ");
-                userInput = inputReader.readLine().toUpperCase();
-
-                // if userInput = y or n, the code below will run once and exit
-                if (userInput.equals("Y")) {
-                    PreparedStatement deleteUser = connection.prepareStatement(
-                            "DELETE FROM users_table WHERE phone_number = '" + phoneNumber + "';");
-                    if (deleteUser.executeUpdate() > 0) {
-                        System.out.println("Account deleted successfully");
-                    }
-                    else {
-                        System.out.println("Account could not be deleted");
-                    }
+                userInput = inputReader.readLine().toUpperCase().strip();
+            }
+            if (userInput.equals("Y")) {
+                PreparedStatement deleteUser = connection.prepareStatement(
+                        "DELETE FROM users_table WHERE phone_number = '" + phoneNumber + "';");
+                if (deleteUser.executeUpdate() > 0) {
+                    System.out.println("Account deleted successfully");
                 }
                 else {
-                    System.out.println("Account not deleted");
+                    System.out.println("Account could not be deleted");
                 }
+            }
+            else {
+                System.out.println("Account not deleted");
             }
         }
         else {
             System.out.println("Account not found. Delete failed");
         }
     }
-
 
 }

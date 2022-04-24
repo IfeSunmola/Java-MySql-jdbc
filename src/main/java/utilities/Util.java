@@ -12,10 +12,10 @@ public final class Util {
     public static Connection getConnection() {
         Connection connection; //null will be returned if it could not be connected
         try {
-            String driver = "com.mysql.cj.jdbc.Driver";
-            String url = "jdbc:mysql://localhost:3306/users_db";
-            String username = "root";
-            String password = "password";
+            String driver = System.getenv("SQL_DRIVER");
+            String url = System.getenv("SQL_URL");
+            String username = System.getenv("SQL_USERNAME");
+            String password = System.getenv("SQL_PASSWORD");
 
             Class.forName(driver);
 
