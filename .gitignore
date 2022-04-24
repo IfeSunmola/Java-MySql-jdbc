@@ -1,5 +1,5 @@
 .idea
 out
-SocialAppName.iml
+JavaAndMySql.iml
 target
 src/main/java/TestClass.java
