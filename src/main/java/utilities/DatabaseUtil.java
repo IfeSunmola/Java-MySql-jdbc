@@ -62,8 +62,8 @@ public final class DatabaseUtil {
      */
     public static boolean numberExistsInDB(String userPhoneNumber, Connection connection) throws SQLException {
         PreparedStatement getPhoneNumber = connection.prepareStatement(
-                //get all the userPhoneNumber. It should only return one number
-                "SELECT * FROM users_table WHERE phone_number= '" + userPhoneNumber + "';");
+                //get the user's phone number from db.
+                "SELECT phone_number FROM users_table WHERE phone_number= '" + userPhoneNumber + "';");
         ResultSet result = getPhoneNumber.executeQuery();// store the result
         String numberInDb = "";
         if (result.next()) {//.next returns true if there is a data in the ResultSet.
