@@ -145,14 +145,14 @@ public final class UserInputUtil {
     /**
      * @return the current date
      */
-    public static String getDateRegistered() {
+    public static String getCurrentDate() {
         return ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
     }
 
     /**
      * @return the current time
      */
-    public static String getTimeRegistered() {
+    public static String getCurrentTime() {
         return ZonedDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"));
     }
     // validating user input

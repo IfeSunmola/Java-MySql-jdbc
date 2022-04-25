@@ -1,6 +1,8 @@
 package utilities;
 
 import java.sql.*;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 /**
  * This class contains all the functions related to MySql operations<br>All the related exceptions will be caught in
@@ -47,10 +49,12 @@ public final class DatabaseUtil {
                         age INT NOT NULL,
                         gender VARCHAR(10) NOT NULL,
                         date_of_reg Date NOT NULL,
-                        time_of_reg TIME NOT NULL
+                        time_of_reg TIME NOT NULL,
+                        last_login_time DATETIME DEFAULT '2000-11-24 01:01:01'   
                         );""");
         create.executeUpdate();
-
+//    set the last login time to an old date as the default value so the user won't get logged in automatically if
+//    they haven't logged in before
     }
 
     /**
@@ -71,5 +75,17 @@ public final class DatabaseUtil {
             numberInDb = result.getString("phone_number");// phone_number is the column name
         }
         return numberInDb.equals(userPhoneNumber);
+    }
+
+    public static LocalDateTime getLastLoginTime(Connection connection, String userPhoneNumber) throws SQLException {
+        PreparedStatement getLastLoginTime = connection.prepareStatement(
+                "SELECT last_login_time FROM users_table WHERE phone_number= '" + userPhoneNumber + "';");
+        ResultSet result = getLastLoginTime.executeQuery();
+        LocalDateTime lastTime = null;
+        if (result.next()) {
+            String temp = result.getString("last_login_time");
+            lastTime = LocalDateTime.parse(temp, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+        }
+        return lastTime;
     }
 }

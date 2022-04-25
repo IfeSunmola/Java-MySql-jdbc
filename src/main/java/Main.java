@@ -8,6 +8,8 @@ import java.io.InputStreamReader;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 
 import static utilities.DatabaseUtil.*;
 import static utilities.UserInputUtil.*;
@@ -64,7 +66,8 @@ public class Main {
                     default -> System.out.println("Make a valid selection");
                 }
             }
-        } catch (IOException | SQLException | ClassNotFoundException e) {
+        }
+        catch (IOException | SQLException | ClassNotFoundException e) {
             throw new RuntimeException(e);
         }
     }
@@ -88,8 +91,8 @@ public class Main {
         String phoneNumber = getPhoneNumber(inputReader);
         System.out.println("--------------");
         String gender = getGenderIdentity(inputReader);
-        String timeRegistered = getTimeRegistered();
-        String dateRegistered = getDateRegistered();
+        String timeRegistered = getCurrentTime();
+        String dateRegistered = getCurrentDate();
 
         if (!numberExistsInDB(phoneNumber, connection)) {// the user does not have an account, create one
             PreparedStatement addUser = connection.prepareStatement(
@@ -102,11 +105,13 @@ public class Main {
                 System.out.println("------------------------------------------");
                 System.out.println("Account created Successfully");
                 System.out.println("------------------------------------------");
-            } else {// failed
+            }
+            else {// failed
                 // shouldn't happen but just in case
                 System.err.println("Account could not be created (executeUpdate returned number != 1)");
             }
-        } else {
+        }
+        else {
             System.out.println("You already have an account. Log in instead.");
         }
 
@@ -126,29 +131,47 @@ public class Main {
         String userPhoneNumber = getPhoneNumber(inputReader);// ask for the user's phone number to log in
 
         if (numberExistsInDB(userPhoneNumber, connection)) { // user has an account
-            final String ACCOUNT_SID = System.getenv("TWILIO_ACCOUNT_SID");
-            final String AUTH_TOKEN = System.getenv("TWILIO_AUTH_TOKEN");
-            final String PHONE_NUMBER = System.getenv("TWILIO_PHONE_NUMBER");
-            Twilio.init(ACCOUNT_SID, AUTH_TOKEN);
+            LocalDateTime lastLoginTime = getLastLoginTime(connection, userPhoneNumber);
+            long elapsed = ChronoUnit.MINUTES.between(lastLoginTime, LocalDateTime.now());
 
-            String code = getVerificationCode(); // generate verification code to send to the user
+            if (elapsed >= 720) {
+                System.out.println("Your session has timed out, log in again");
+                final String ACCOUNT_SID = System.getenv("TWILIO_ACCOUNT_SID");
+                final String AUTH_TOKEN = System.getenv("TWILIO_AUTH_TOKEN");
+                final String PHONE_NUMBER = System.getenv("TWILIO_PHONE_NUMBER");
+                Twilio.init(ACCOUNT_SID, AUTH_TOKEN);
 
-            Message message = Message.creator(
-                    new PhoneNumber(userPhoneNumber),
-                    new PhoneNumber(PHONE_NUMBER),
-                    "Verification code is: " + code
-            ).create(); // send the code
+                String code = getVerificationCode(); // generate verification code to send to the user
+
+                Message message = Message.creator(
+                        new PhoneNumber(userPhoneNumber),
+                        new PhoneNumber(PHONE_NUMBER),
+                        "Verification code is: " + code
+                ).create(); // send the code
 
 
-            System.out.print("Enter the verification code that was sent: ");
-            String userCode = inputReader.readLine().strip();
+                System.out.print("Enter the verification code that was sent: ");
+                String userCode = inputReader.readLine().strip();
 
-            if (userCode.equals(code)) {
-                System.out.println("Account found, Log in successful");
-            } else {
-                System.out.println("Wrong code. Log in failed.");
+                if (userCode.equals(code)) {
+                    System.out.println("Account found, Log in successful");
+                    PreparedStatement setLastLoginTime = connection.prepareStatement(
+                            "UPDATE users_table SET last_login_time= '" + getCurrentDate() + " " + getCurrentTime() +
+                                    "' WHERE phone_number='" + userPhoneNumber + "'");
+                    setLastLoginTime.executeUpdate();
+                }
+                else {
+                    System.out.println("Wrong code. Log in failed.");
+                }
             }
-        } else { // user does not have an account
+            else {
+                System.out.println("Still in session, no need to log in.");
+
+            }
+
+
+        }
+        else { // user does not have an account
             System.out.println("Account not found. Log in failed");
         }
     }
@@ -178,14 +201,17 @@ public class Main {
                 // executeUpdate returns the amount of rows that was updated
                 if (deleteUser.executeUpdate() == 1) {// the account was deleted if the number of rows updated is 1
                     System.out.println("Account deleted successfully");
-                } else {
+                }
+                else {
                     // shouldn't happen but just in case
                     System.err.println("Account could not be deleted (executeUpdate returned number != 1)");
                 }
-            } else {// not confirmed, don't delete the account
+            }
+            else {// not confirmed, don't delete the account
                 System.out.println("Account not deleted");
             }
-        } else {// there is no account to delete
+        }
+        else {// there is no account to delete
             System.out.println("Account not found. Delete failed");
         }
     }
