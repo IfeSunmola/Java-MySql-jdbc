@@ -1,8 +1,15 @@
 package utilities;
 
+import java.io.BufferedReader;
+import java.io.IOException;
 import java.sql.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
+
+import static utilities.UserInputUtil.*;
+import static utilities.UserInputUtil.getCurrentDate;
+import static utilities.ValidateUtil.sendVerificationCode;
 
 /**
  * This class contains all the functions related to MySql operations<br>All the related exceptions will be caught in
@@ -11,6 +18,8 @@ import java.time.format.DateTimeFormatter;
  * @author Ife Sunmola
  */
 public final class DatabaseUtil {
+    private static final int MAX_ELAPSED_MINUTES = 720;
+
     /**
      * Method to connect to the database. The data needed (driver, url, etc.) is saved in environment variables.
      *
@@ -30,6 +39,8 @@ public final class DatabaseUtil {
         connection = DriverManager.getConnection(url, username, password);
         return connection;
     }
+
+    //methods to create tables
 
     /**
      * Method to create a table for the users using the database connection.
@@ -57,6 +68,163 @@ public final class DatabaseUtil {
 //    they haven't logged in before
     }
 
+    // methods to log the user in
+    private static LocalDateTime getLastLoginTime(Connection connection, String userPhoneNumber) throws SQLException {
+        PreparedStatement getLastLoginTime = connection.prepareStatement(
+                "SELECT last_login_time FROM users_table WHERE phone_number= '" + userPhoneNumber + "';");
+        ResultSet result = getLastLoginTime.executeQuery();
+        LocalDateTime lastTime = null;
+        if (result.next()) {
+            String temp = result.getString("last_login_time");
+            lastTime = LocalDateTime.parse(temp, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+        }
+        return lastTime;
+    }
+
+    private static boolean sessionTimedOut(Connection connection, String userPhoneNumber) throws SQLException {
+        // returns true if the session has timed out and false if not
+        // session has timed out if 720 minutes (12 hours)  has passed since the last login time
+        LocalDateTime lastLoginTime = getLastLoginTime(connection, userPhoneNumber);
+        long elapsed = ChronoUnit.MINUTES.between(lastLoginTime, LocalDateTime.now());
+        return elapsed >= MAX_ELAPSED_MINUTES;
+    }
+
+    private static void doLogin(BufferedReader inputReader, Connection connection, String userPhoneNumber) throws SQLException, IOException {
+        System.out.println("Your session has timed out, log in again");
+        String code = sendVerificationCode(userPhoneNumber); //returns the verification code that was sent
+
+        System.out.print("Enter the verification code that was sent: ");
+        String userCode = inputReader.readLine().strip();
+
+        if (userCode.equals(code)) {
+            System.out.println("Account found, Log in successful");
+            PreparedStatement setLastLoginTime = connection.prepareStatement(
+                    "UPDATE users_table SET last_login_time= '" + getCurrentDate() + " " + getCurrentTime() +
+                            "' WHERE phone_number='" + userPhoneNumber + "'");
+            setLastLoginTime.executeUpdate();
+        }
+        else {
+            System.out.println("Wrong code. Log in failed.");
+        }
+    }
+
+    /**
+     * Method to allow an existing user to log in to their account. A verification code will be sent to the user's
+     * phone number with twilio. todo: log in with github, login with password, don't let user keep logging in everytime
+     *
+     * @param inputReader to get the user input
+     * @param connection  the connection to the database
+     * @throws IOException  if the user input could not be read
+     * @throws SQLException if there was a problem with the sql server itself
+     */
+    public static void login(BufferedReader inputReader, Connection connection) throws IOException, SQLException {
+        System.out.println("** Login to an existing account **");
+        String userPhoneNumber = getPhoneNumber(inputReader);// ask for the user's phone number to log in
+
+        if (numberExistsInDB(userPhoneNumber, connection)) { // user has an account
+            if (sessionTimedOut(connection, userPhoneNumber)) { // session has timed out
+                doLogin(inputReader, connection, userPhoneNumber);// log the user in
+            }
+            else {// session has NOT timed out
+                System.out.println("Still in session, no need to log in.");
+            }
+        }
+        else { // user does not have an account
+            System.out.println("Account not found. Log in failed");
+        }
+    }
+
+    // methods to create an account
+
+    /**
+     * Method to create an account for a user. The account will not be created if an account has already been
+     * created with the same phone number.<br> The age will be calculated in the database, rather than directly in the
+     * code
+     *
+     * @param inputReader to get the user input
+     * @param connection  the connection to the database
+     * @throws IOException  if the user input could not be read
+     * @throws SQLException if there was a problem with the sql server itself
+     */
+    public static void createAccount(BufferedReader inputReader, Connection connection) throws IOException, SQLException {
+        System.out.println("** Creating an account **");
+        String name = getName(inputReader);
+        System.out.println("--------------");
+        String dateOfBirth = getDateOfBirth(inputReader);
+        System.out.println("--------------");
+        String phoneNumber = getPhoneNumber(inputReader);
+        System.out.println("--------------");
+        String gender = getGenderIdentity(inputReader);
+        String timeRegistered = getCurrentTime();
+        String dateRegistered = getCurrentDate();
+
+        if (!numberExistsInDB(phoneNumber, connection)) {// the user does not have an account, create one
+            PreparedStatement addUser = connection.prepareStatement(
+                    "INSERT INTO users_table " +
+                            "(phone_number, user_name, date_of_birth, age, gender, date_of_reg, time_of_reg) " +
+                            "VALUES('" + phoneNumber + "', '" + name + "', '" + dateOfBirth + "', TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()), " +
+                            "'" + gender + "', '" + dateRegistered + "', '" + timeRegistered + "');");
+            // executeUpdate returns the amount of rows that was updated
+            if (addUser.executeUpdate() == 1) {// the account was created if the number of rows updated is 1
+                System.out.println("------------------------------------------");
+                System.out.println("Account created Successfully");
+                System.out.println("Log in to your account");
+                System.out.println("------------------------------------------");
+            }
+            else {// failed
+                // shouldn't happen but just in case
+                System.err.println("Account could not be created (executeUpdate returned number != 1)");
+            }
+        }
+        else {
+            System.out.println("You already have an account. Log in instead.");
+        }
+    }
+
+    // methods to delete an account
+
+    /**
+     * Method to allow the user to delete their account.
+     *
+     * @param inputReader to get the user input
+     * @param connection  the connection to the database
+     * @throws IOException  if the user input could not be read
+     * @throws SQLException if there was a problem with the sql server itself
+     */
+    public static void deleteAccount(BufferedReader inputReader, Connection connection) throws IOException, SQLException {
+        System.out.println("** Deleting an account **");
+        String phoneNumber = getPhoneNumber(inputReader);// get account to delete
+
+        if (numberExistsInDB(phoneNumber, connection)) {// there is an account to delete
+            String userInput = "";
+            while (!userInput.equals("Y") && !userInput.equals("N")) {// confirm if the user wants to delete their account
+                System.out.println("YOUR ACCOUNT CANNOT BE RECOVERED AFTER DELETION");
+                System.out.print("Are you sure you want to delete your account? This process is IRREVERSIBLE (y/n): ");
+                userInput = inputReader.readLine().toUpperCase().strip();
+            }
+            if (userInput.equals("Y")) {// delete the account if confirmed
+                PreparedStatement deleteUser = connection.prepareStatement(
+                        "DELETE FROM users_table WHERE phone_number = '" + phoneNumber + "';");
+                // executeUpdate returns the amount of rows that was updated
+                if (deleteUser.executeUpdate() == 1) {// the account was deleted if the number of rows updated is 1
+                    System.out.println("Account deleted successfully");
+                }
+                else {
+                    // shouldn't happen but just in case
+                    System.err.println("Account could not be deleted (executeUpdate returned number != 1)");
+                }
+            }
+            else {// not confirmed, don't delete the account
+                System.out.println("Account not deleted");
+            }
+        }
+        else {// there is no account to delete
+            System.out.println("Account not found. Delete failed");
+        }
+    }
+
+    //misc
+
     /**
      * Method to check if a phone number exists in the database
      *
@@ -65,7 +233,7 @@ public final class DatabaseUtil {
      * @return true if the phone number is already in the database OR false if it's not
      * @throws SQLException if there was a problem with the sql server itself
      */
-    public static boolean numberExistsInDB(String userPhoneNumber, Connection connection) throws SQLException {
+    private static boolean numberExistsInDB(String userPhoneNumber, Connection connection) throws SQLException {
         PreparedStatement getPhoneNumber = connection.prepareStatement(
                 //get the user's phone number from db.
                 "SELECT phone_number FROM users_table WHERE phone_number= '" + userPhoneNumber + "';");
@@ -77,15 +245,4 @@ public final class DatabaseUtil {
         return numberInDb.equals(userPhoneNumber);
     }
 
-    public static LocalDateTime getLastLoginTime(Connection connection, String userPhoneNumber) throws SQLException {
-        PreparedStatement getLastLoginTime = connection.prepareStatement(
-                "SELECT last_login_time FROM users_table WHERE phone_number= '" + userPhoneNumber + "';");
-        ResultSet result = getLastLoginTime.executeQuery();
-        LocalDateTime lastTime = null;
-        if (result.next()) {
-            String temp = result.getString("last_login_time");
-            lastTime = LocalDateTime.parse(temp, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-        }
-        return lastTime;
-    }
 }

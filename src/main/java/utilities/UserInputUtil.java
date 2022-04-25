@@ -180,7 +180,8 @@ public final class UserInputUtil {
         try {
             // checking if the date format is valid
             LocalDate.parse(dateOfBirth, formatter);
-        } catch (DateTimeParseException e) {
+        }
+        catch (DateTimeParseException e) {
             isValidDate = false;
         }
 
@@ -199,12 +200,12 @@ public final class UserInputUtil {
      * @return true if the phone number is valid and false if it's not
      */
     private static boolean isValidNumber(String phoneNumber) {
+        // For some reason, Integer.parseInt doesn't work on some phone number
         boolean isValidNumber = true;
-        try {
-            // check for only integers
-            Integer.parseInt(phoneNumber);
-        } catch (NumberFormatException e) {
-            isValidNumber = false;
+        for (int i = 0; i < phoneNumber.length() && isValidNumber; i++) {
+            if (!Character.isDigit(phoneNumber.charAt(i))) {
+                isValidNumber = false;
+            }
         }
         if (isValidNumber) {// number has only integers, check the length
             if (phoneNumber.length() != 10) {
