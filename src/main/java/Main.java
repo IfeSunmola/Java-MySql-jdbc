@@ -25,7 +25,7 @@ import static utilities.UserInputUtil.*;
  */
 public class Main {
     public static void main(String[] args) {
-        System.out.println(mainMenu());
+        System.out.println(showMainMenu());
         // no need to close inputReader and connection since the try is used like this
         try (BufferedReader inputReader = new BufferedReader(new InputStreamReader(System.in)); Connection connection = getConnection()) {
             if (connection == null) {

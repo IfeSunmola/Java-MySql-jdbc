@@ -24,7 +24,7 @@ public final class UserInputUtil {
     /**
      * @return String containing the main menu options
      */
-    public static String mainMenu() {
+    public static String showMainMenu() {
         return """
                 Select an option, 1 or 2 (enter 0 to quit):
                 1. Create an account
@@ -36,7 +36,7 @@ public final class UserInputUtil {
     /**
      * @return String containing the gender options
      */
-    private static String genderMenu() {
+    private static String showGenderMenu() {
         return """
                 How do you identify?
                 Select an option
@@ -111,7 +111,7 @@ public final class UserInputUtil {
     public static String getGenderIdentity(BufferedReader inputReader) throws IOException {
         String gender = "";
         String userInput;
-        System.out.println(genderMenu());//print list of genders
+        System.out.println(showGenderMenu());//print list of genders
         boolean selectionWasValid = false;// used to end the loop
         while (!selectionWasValid) {// keep looping till a valid selection is made or till the user enters their identity
             System.out.print("Your response: ");
