@@ -3,6 +3,7 @@ package utilities;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.time.LocalDate;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoUnit;
@@ -141,6 +142,19 @@ public final class UserInputUtil {
         return gender;
     }
 
+    /**
+     * @return the current date
+     */
+    public static String getDateRegistered() {
+        return ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+    }
+
+    /**
+     * @return the current time
+     */
+    public static String getTimeRegistered() {
+        return ZonedDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"));
+    }
     // validating user input
 
     /**
@@ -166,8 +180,7 @@ public final class UserInputUtil {
         try {
             // checking if the date format is valid
             LocalDate.parse(dateOfBirth, formatter);
-        }
-        catch (DateTimeParseException e) {
+        } catch (DateTimeParseException e) {
             isValidDate = false;
         }
 
@@ -190,8 +203,7 @@ public final class UserInputUtil {
         try {
             // check for only integers
             Integer.parseInt(phoneNumber);
-        }
-        catch (NumberFormatException e) {
+        } catch (NumberFormatException e) {
             isValidNumber = false;
         }
         if (isValidNumber) {// number has only integers, check the length

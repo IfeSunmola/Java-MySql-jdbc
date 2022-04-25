@@ -5,11 +5,13 @@ import com.twilio.type.PhoneNumber;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 
-import static utilities.UserInputUtil.*;
 import static utilities.DatabaseUtil.*;
-import static utilities.ValidateUtil.*;
+import static utilities.UserInputUtil.*;
+import static utilities.ValidateUtil.getVerificationCode;
 
 /*
  * Todo:
@@ -18,6 +20,7 @@ import static utilities.ValidateUtil.*;
  *  change gender to show all options
  *  move createUsersTable to private class in DatabaseUtil
  *  login by password
+ *  name should be in format Firstname
  * */
 
 /**
@@ -30,7 +33,7 @@ public class Main {
         System.out.println(mainMenu());
         // no need to close inputReader and connection since the try is used like this
         try (BufferedReader inputReader = new BufferedReader(new InputStreamReader(System.in)); Connection connection = getConnection()) {
-            if (connection == null){
+            if (connection == null) {
                 System.out.println("Connection failed.");
                 return;
             }
@@ -61,8 +64,7 @@ public class Main {
                     default -> System.out.println("Make a valid selection");
                 }
             }
-        }
-        catch (IOException | SQLException | ClassNotFoundException e) {
+        } catch (IOException | SQLException | ClassNotFoundException e) {
             throw new RuntimeException(e);
         }
     }
@@ -86,25 +88,25 @@ public class Main {
         String phoneNumber = getPhoneNumber(inputReader);
         System.out.println("--------------");
         String gender = getGenderIdentity(inputReader);
+        String timeRegistered = getTimeRegistered();
+        String dateRegistered = getDateRegistered();
 
         if (!numberExistsInDB(phoneNumber, connection)) {// the user does not have an account, create one
             PreparedStatement addUser = connection.prepareStatement(
                     "INSERT INTO users_table " +
-                            "(user_name, date_of_birth, age, phone_number, gender) " +
-                            "VALUES('" + name + "', '" + dateOfBirth + "', TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()),  '" +
-                            phoneNumber + "', '" + gender + "');");
+                            "(phone_number, user_name, date_of_birth, age, gender, date_of_reg, time_of_reg) " +
+                            "VALUES('" + phoneNumber + "', '" + name + "', '" + dateOfBirth + "', TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()), " +
+                            "'" + gender + "', '" + dateRegistered + "', '" + timeRegistered + "');");
             // executeUpdate returns the amount of rows that was updated
             if (addUser.executeUpdate() == 1) {// the account was created if the number of rows updated is 1
                 System.out.println("------------------------------------------");
                 System.out.println("Account created Successfully");
                 System.out.println("------------------------------------------");
-            }
-            else {// failed
+            } else {// failed
                 // shouldn't happen but just in case
                 System.err.println("Account could not be created (executeUpdate returned number != 1)");
             }
-        }
-        else {
+        } else {
             System.out.println("You already have an account. Log in instead.");
         }
 
@@ -143,12 +145,10 @@ public class Main {
 
             if (userCode.equals(code)) {
                 System.out.println("Account found, Log in successful");
-            }
-            else {
+            } else {
                 System.out.println("Wrong code. Log in failed.");
             }
-        }
-        else { // user does not have an account
+        } else { // user does not have an account
             System.out.println("Account not found. Log in failed");
         }
     }
@@ -178,17 +178,14 @@ public class Main {
                 // executeUpdate returns the amount of rows that was updated
                 if (deleteUser.executeUpdate() == 1) {// the account was deleted if the number of rows updated is 1
                     System.out.println("Account deleted successfully");
-                }
-                else {
+                } else {
                     // shouldn't happen but just in case
                     System.err.println("Account could not be deleted (executeUpdate returned number != 1)");
                 }
-            }
-            else {// not confirmed, don't delete the account
+            } else {// not confirmed, don't delete the account
                 System.out.println("Account not deleted");
             }
-        }
-        else {// there is no account to delete
+        } else {// there is no account to delete
             System.out.println("Account not found. Delete failed");
         }
     }
