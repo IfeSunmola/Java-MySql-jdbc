@@ -1,14 +1,11 @@
-import com.mysql.cj.log.Log;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
+import static utilities.Helpers.numberExistsInDB;
 import static utilities.UserInputUtil.*;
-import static utilities.UserInputUtil.getCurrentDate;
-import static utilities.Helpers.*;
 
 
 public class CreateAnAccount {
@@ -55,7 +52,7 @@ public class CreateAnAccount {
         }
         else {
             System.out.println("You already have an account. Log in instead.");
-            Login.runLogin(inputReader, connection);;
+            Login.runLogin(inputReader, connection);
         }
     }
 

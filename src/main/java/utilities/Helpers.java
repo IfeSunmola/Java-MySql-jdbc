@@ -35,7 +35,7 @@ public class Helpers {
     public static void createUsersTable(Connection connection) throws SQLException {
         // if users_table does not exist in the database, create it
         PreparedStatement create = connection.prepareStatement(
-                """ 
+                """
                         CREATE TABLE IF NOT EXISTS users_table(
                         phone_number VARCHAR(10) PRIMARY KEY UNIQUE NOT NULL,
                         user_name VARCHAR(10) NOT NULL,
@@ -44,7 +44,7 @@ public class Helpers {
                         gender VARCHAR(10) NOT NULL,
                         date_of_reg Date NOT NULL,
                         time_of_reg TIME NOT NULL,
-                        last_login_time DATETIME DEFAULT '2000-11-24 01:01:01'   
+                        last_login_time DATETIME DEFAULT '2000-11-24 01:01:01'
                         );""");
         create.executeUpdate();
 //    set the last login time to an old date as the default value so the user won't get logged in automatically if
