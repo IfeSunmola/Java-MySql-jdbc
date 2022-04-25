@@ -1,10 +1,9 @@
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.sql.Connection;
 import java.sql.SQLException;
 
-import static utilities.DatabaseUtil.*;
+import static utilities.Helpers.createUsersTable;
+import static utilities.Helpers.getConnection;
 import static utilities.UserInputUtil.*;
 
 /*
@@ -25,40 +24,15 @@ import static utilities.UserInputUtil.*;
  */
 public class Main {
     public static void main(String[] args) {
-        System.out.println(showMainMenu());
+//
         // no need to close inputReader and connection since the try is used like this
-        try (BufferedReader inputReader = new BufferedReader(new InputStreamReader(System.in)); Connection connection = getConnection()) {
+        try (Connection connection = getConnection()) {
             if (connection == null) {
                 System.err.println("Connection failed.");
                 return;
             }
             createUsersTable(connection);
-            boolean selectionWasValid = false;
-            String userInput;
-
-            while (!selectionWasValid) {
-                System.out.print("Your response: ");
-                userInput = inputReader.readLine().strip();
-                switch (userInput) {
-                    case "1" -> {
-                        createAccount(inputReader, connection);
-                        selectionWasValid = true;
-                    }
-                    case "2" -> {
-                        login(inputReader, connection);
-                        selectionWasValid = true;
-                    }
-                    case "3" -> {
-                        deleteAccount(inputReader, connection);
-                        selectionWasValid = true;
-                    }
-                    case "0" -> {
-                        System.out.println("Have a nice day");
-                        selectionWasValid = true;
-                    }
-                    default -> System.out.println("Make a valid selection");
-                }
-            }
+            MainMenu.runMainMenu(connection);
         }
         catch (IOException | SQLException | ClassNotFoundException e) {
             throw new RuntimeException(e);

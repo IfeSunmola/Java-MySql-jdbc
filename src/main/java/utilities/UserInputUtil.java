@@ -22,18 +22,6 @@ public final class UserInputUtil {
     // menu options
 
     /**
-     * @return String containing the main menu options
-     */
-    public static String showMainMenu() {
-        return """
-                Select an option, 1 or 2 (enter 0 to quit):
-                1. Create an account
-                2. Log in to an existing account
-                3. Delete an account
-                """;
-    }
-
-    /**
      * @return String containing the gender options
      */
     private static String showGenderMenu() {
