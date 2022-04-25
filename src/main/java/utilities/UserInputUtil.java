@@ -39,7 +39,7 @@ public final class UserInputUtil {
         return """
                 How do you identify?
                 Select an option
-                1. Non binary
+                1. Non Binary
                 2. Woman
                 3. Man
                 4. Other (type below)
