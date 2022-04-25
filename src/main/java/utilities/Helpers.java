@@ -25,8 +25,6 @@ public class Helpers {
         return connection;
     }
 
-    //methods to create tables
-
     /**
      * Method to create a table for the users using the database connection.
      * todo: make this private

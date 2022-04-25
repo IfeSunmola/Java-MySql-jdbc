@@ -24,7 +24,6 @@ import static utilities.UserInputUtil.*;
  */
 public class Main {
     public static void main(String[] args) {
-//
         // no need to close inputReader and connection since the try is used like this
         try (Connection connection = getConnection()) {
             if (connection == null) {
