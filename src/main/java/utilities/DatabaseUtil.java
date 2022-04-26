@@ -98,9 +98,7 @@ public final class DatabaseUtil {
     }
 
     private static void doLogin(BufferedReader inputReader, Connection connection, String userPhoneNumber) throws SQLException, IOException {
-        PreparedStatement setLastLoginTime = connection.prepareStatement(
-                "UPDATE users_table SET last_login_time= '" + getCurrentDate() + " " + getCurrentTime() +
-                        "' WHERE phone_number='" + userPhoneNumber + "'");
+
         System.out.println("You need to log in");
         String code = sendVerificationCode(userPhoneNumber); //returns the verification code that was sent
 
@@ -109,6 +107,9 @@ public final class DatabaseUtil {
 
         if (userCode.equals(code)) {
             System.out.println("Account found, Log in successful");
+            PreparedStatement setLastLoginTime = connection.prepareStatement(
+                    "UPDATE users_table SET last_login_time= '" + getCurrentDate() + " " + getCurrentTime() +
+                            "' WHERE phone_number='" + userPhoneNumber + "'");
             setLastLoginTime.executeUpdate();
             Menu.doLoginMenu(userPhoneNumber);
         }
