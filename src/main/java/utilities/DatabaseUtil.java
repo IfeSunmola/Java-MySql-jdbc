@@ -101,12 +101,14 @@ public final class DatabaseUtil {
         String code = sendVerificationCode(userPhoneNumber); //returns the verification code that was sent
 
         String userCode = "";
-        while (!userCode.equals(code)) {
-            System.out.print("Enter the verification code that was sent: ");
+        int attempts = 5;
+        while (!code.equals(userCode) && attempts > 0) {
+            System.out.print("Verification code that was sent - " + attempts + " attempt(s): ");
             userCode = inputReader.readLine();
+            attempts--;
         }
 
-        if (userCode.equals(code)) {
+        if (userCode.equals(code)) { // always true
             System.out.println("Account found, Log in successful");
             PreparedStatement setLastLoginTime = connection.prepareStatement(
                     "UPDATE " + USERS_TABLE + " SET " + LAST_LOGIN_DATE + " = " + addQuotes(getCurrentDateTime()) +
@@ -180,7 +182,7 @@ public final class DatabaseUtil {
             PreparedStatement addUser = connection.prepareStatement(
                     "INSERT INTO " + USERS_TABLE + " (" + PHONE_NUMBER + ", " + USER_NAME + ", " + DATE_OF_BIRTH + ", " + Age + ", " + GENDER + ", " + DATE_OF_REG + ") " +
                             "VALUES(" + addQuotes(userPhoneNumber) + ", " + addQuotes(name) + ", " + addQuotes(dateOfBirth) + ", TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()), "
-                            + addQuotes(gender) + ", " + addQuotes(getCurrentDateTime()) +");");
+                            + addQuotes(gender) + ", " + addQuotes(getCurrentDateTime()) + ");");
             // executeUpdate returns the amount of rows that was updated
             if (addUser.executeUpdate() == 1) {// the account was created if the number of rows updated is 1
                 System.out.println("------------------------------------------");
