@@ -98,7 +98,10 @@ public final class DatabaseUtil {
     }
 
     private static void doLogin(BufferedReader inputReader, Connection connection, String userPhoneNumber) throws SQLException, IOException {
-        System.out.println("Your session has timed out, log in again");
+        PreparedStatement setLastLoginTime = connection.prepareStatement(
+                "UPDATE users_table SET last_login_time= '" + getCurrentDate() + " " + getCurrentTime() +
+                        "' WHERE phone_number='" + userPhoneNumber + "'");
+        System.out.println("You need to log in");
         String code = sendVerificationCode(userPhoneNumber); //returns the verification code that was sent
 
         System.out.print("Enter the verification code that was sent: ");
@@ -106,9 +109,6 @@ public final class DatabaseUtil {
 
         if (userCode.equals(code)) {
             System.out.println("Account found, Log in successful");
-            PreparedStatement setLastLoginTime = connection.prepareStatement(
-                    "UPDATE users_table SET last_login_time= '" + getCurrentDate() + " " + getCurrentTime() +
-                            "' WHERE phone_number='" + userPhoneNumber + "'");
             setLastLoginTime.executeUpdate();
             Menu.doLoginMenu(userPhoneNumber);
         }
@@ -164,20 +164,20 @@ public final class DatabaseUtil {
         System.out.println("--------------");
         String dateOfBirth = getDateOfBirth(inputReader);
         System.out.println("--------------");
-        String phoneNumber = getPhoneNumber(inputReader);
+        String userPhoneNumber = getPhoneNumber(inputReader);
         String gender = getGenderIdentity(inputReader);
 
-        if (!numberExistsInDB(phoneNumber, connection)) {// the user does not have an account, create one
+        if (!numberExistsInDB(userPhoneNumber, connection)) {// the user does not have an account, create one
             PreparedStatement addUser = connection.prepareStatement(
                     "INSERT INTO users_table " +
                             "(phone_number, user_name, date_of_birth, age, gender, date_of_reg, time_of_reg) " +
-                            "VALUES('" + phoneNumber + "', '" + name + "', '" + dateOfBirth + "', TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()), " +
+                            "VALUES('" + userPhoneNumber + "', '" + name + "', '" + dateOfBirth + "', TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()), " +
                             "'" + gender + "', '" + getCurrentDate() + "', '" + getCurrentTime() + "');");
             // executeUpdate returns the amount of rows that was updated
             if (addUser.executeUpdate() == 1) {// the account was created if the number of rows updated is 1
                 System.out.println("------------------------------------------");
                 System.out.println("Account created Successfully");
-                System.out.println("Log in to your account");
+                doLogin(inputReader, connection, userPhoneNumber);
                 System.out.println("------------------------------------------");
             }
             else {// failed
