@@ -40,10 +40,6 @@ public class Menu {
                     login(inputReader, CONNECTION);
                     selectionWasValid = true;
                 }
-                case "3" -> {
-                    deleteAccount(inputReader, CONNECTION);
-                    selectionWasValid = true;
-                }
                 case "0" -> {
                     System.out.println("Have a nice day");
                     selectionWasValid = true;
@@ -59,12 +55,16 @@ public class Menu {
         boolean selectionWasValid = false;
         String userInput;
         System.out.println(showLoginMenu());
-        while (!selectionWasValid){
+        while (!selectionWasValid) {
             System.out.print("Your response: ");
             userInput = inputReader.readLine().strip();
-            if (userInput.equals("1")){
+            if (userInput.equals("1")) {
                 // view your profile
                 showProfile(CONNECTION, userPhoneNumber);
+                selectionWasValid = true;
+            }
+            else if (userInput.equals("2")) {
+                deleteAccount(CONNECTION, userPhoneNumber);
                 selectionWasValid = true;
             }
         }

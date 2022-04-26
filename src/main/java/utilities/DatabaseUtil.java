@@ -2,6 +2,7 @@ package utilities;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.sql.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -203,40 +204,46 @@ public final class DatabaseUtil {
     /**
      * Method to allow the user to delete their account.
      *
-     * @param inputReader to get the user input
-     * @param connection  the connection to the database
+     * @param connection      the connection to the database
+     * @param userPhoneNumber the phone number of the account to delete
      * @throws IOException  if the user input could not be read
      * @throws SQLException if there was a problem with the sql server itself
      */
-    public static void deleteAccount(BufferedReader inputReader, Connection connection) throws IOException, SQLException {
+    public static void deleteAccount(Connection connection, String userPhoneNumber) throws IOException, SQLException {
         System.out.println("** Deleting an account **");
-        String phoneNumber = getPhoneNumber(inputReader);// get account to delete
 
-        if (numberExistsInDB(phoneNumber, connection)) {// there is an account to delete
+        if (numberExistsInDB(userPhoneNumber, connection)) {// there is an account to delete
             String userInput = "";
+            BufferedReader inputReader = new BufferedReader(new InputStreamReader(System.in));
             while (!userInput.equals("Y") && !userInput.equals("N")) {// confirm if the user wants to delete their account
                 System.out.println("YOUR ACCOUNT CANNOT BE RECOVERED AFTER DELETION");
                 System.out.print("Are you sure you want to delete your account? This process is IRREVERSIBLE (y/n): ");
                 userInput = inputReader.readLine().toUpperCase().strip();
             }
+
             if (userInput.equals("Y")) {// delete the account if confirmed
                 PreparedStatement deleteUser = connection.prepareStatement(
-                        "DELETE FROM " + USERS_TABLE + " WHERE " + PHONE_NUMBER + " = " + addQuotes(phoneNumber) + ";");
+                        "DELETE FROM " + USERS_TABLE + " WHERE " + PHONE_NUMBER + " = " + addQuotes(userPhoneNumber) + ";");
                 // executeUpdate returns the amount of rows that was updated
                 if (deleteUser.executeUpdate() == 1) {// the account was deleted if the number of rows updated is 1
                     System.out.println("Account deleted successfully");
+                    Menu.doMainMenu();
                 }
                 else {
                     // shouldn't happen but just in case
                     System.err.println("Account could not be deleted (executeUpdate returned number != 1)");
+                    Menu.doMainMenu();
                 }
             }
             else {// not confirmed, don't delete the account
-                System.out.println("Account not deleted");
+                System.out.println("Didn't confirm, account not deleted");
+                Menu.doLoginMenu(userPhoneNumber);
             }
+            inputReader.close();
         }
-        else {// there is no account to delete
-            System.out.println("Account not found. Delete failed");
+        else {// there is no account to delete. Shouldn't work since the user is already logged in but oh well
+            System.err.println("Account not found. Delete failed");
+            Menu.doMainMenu();
         }
     }
 

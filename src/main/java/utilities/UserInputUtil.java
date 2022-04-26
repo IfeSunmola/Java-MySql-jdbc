@@ -30,7 +30,6 @@ public final class UserInputUtil {
                 |Select an option, 1 or 2 (enter 0 to quit)|
                 |1. Create an account                      |
                 |2. Log in to an existing account          |
-                |3. Delete an account                      |
                 --------------------------------------------
                 """;
     }
@@ -53,9 +52,10 @@ public final class UserInputUtil {
 
     public static String showLoginMenu() {
         return """
-                ----------------------
-                |1. View your profile|
-                ----------------------
+                ------------------------
+                |1. View your profile  |
+                |2. Delete your account|
+                ------------------------
                 """;
     }
     // asking for user input
