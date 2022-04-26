@@ -18,7 +18,7 @@ import static utilities.ValidateUtil.sendVerificationCode;
  * @author Ife Sunmola
  */
 public final class DatabaseUtil {
-    private static final int MAX_ELAPSED_MINUTES = 720;
+    private static final int MAX_ELAPSED_MINUTES = 9000;
     // database info. Using constants in case I need to change any name
     private static final String USERS_TABLE = "users_table";
     private static final String PHONE_NUMBER = "phone_number";
@@ -104,7 +104,7 @@ public final class DatabaseUtil {
         int attempts = 5;
         while (!code.equals(userCode) && attempts > 0) {
             System.out.print("Verification code that was sent - " + attempts + " attempt(s): ");
-            userCode = inputReader.readLine();
+            userCode = inputReader.readLine().strip();
             attempts--;
         }
 
