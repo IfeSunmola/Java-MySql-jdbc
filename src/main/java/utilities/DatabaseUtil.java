@@ -2,7 +2,6 @@ package utilities;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.sql.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -28,7 +27,6 @@ public final class DatabaseUtil {
     private static final String Age = "age";
     private static final String GENDER = "gender";
     private static final String DATE_OF_REG = "date_of_reg";
-    private static final String TIME_OF_REG = "time_of_reg";
     private static final String LAST_LOGIN_DATE = "last_login_time"; // change to last login date
     private static final int NUM_COLUMNS = 8;
 
@@ -70,8 +68,7 @@ public final class DatabaseUtil {
                         + DATE_OF_BIRTH + " DATE NOT NULL,"
                         + Age + " INT NOT NULL,"
                         + GENDER + " VARCHAR(10) NOT NULL,"
-                        + DATE_OF_REG + " Date NOT NULL,"
-                        + TIME_OF_REG + " TIME NOT NULL,"
+                        + DATE_OF_REG + " DATETIME NOT NULL,"
                         + LAST_LOGIN_DATE + " DATETIME DEFAULT '2000-11-24 01:01:01')");
         create.executeUpdate();
 //    set the last login time to an old date as the default value so the user won't get logged in automatically if
@@ -100,10 +97,8 @@ public final class DatabaseUtil {
     }
 
     private static void doLogin(BufferedReader inputReader, Connection connection, String userPhoneNumber) throws SQLException, IOException {
-
         System.out.println("You need to log in");
         String code = sendVerificationCode(userPhoneNumber); //returns the verification code that was sent
-
 
         String userCode = "";
         while (!userCode.equals(code)) {
@@ -114,7 +109,7 @@ public final class DatabaseUtil {
         if (userCode.equals(code)) {
             System.out.println("Account found, Log in successful");
             PreparedStatement setLastLoginTime = connection.prepareStatement(
-                    "UPDATE " + USERS_TABLE + " SET " + LAST_LOGIN_DATE + " = " + addQuotes(getCurrentDate() + " " + getCurrentTime()) +
+                    "UPDATE " + USERS_TABLE + " SET " + LAST_LOGIN_DATE + " = " + addQuotes(getCurrentDateTime()) +
                             " WHERE " + PHONE_NUMBER + " = " + addQuotes(userPhoneNumber) + ";");
             setLastLoginTime.executeUpdate();
             Menus.doLoginMenu(userPhoneNumber);
@@ -183,9 +178,9 @@ public final class DatabaseUtil {
 
         if (!numberExistsInDB(userPhoneNumber, connection)) {// the user does not have an account, create one
             PreparedStatement addUser = connection.prepareStatement(
-                    "INSERT INTO " + USERS_TABLE + " (" + PHONE_NUMBER + ", " + USER_NAME + ", " + DATE_OF_BIRTH + ", " + Age + ", " + GENDER + ", " + DATE_OF_REG + ", " + TIME_OF_REG + ") " +
+                    "INSERT INTO " + USERS_TABLE + " (" + PHONE_NUMBER + ", " + USER_NAME + ", " + DATE_OF_BIRTH + ", " + Age + ", " + GENDER + ", " + DATE_OF_REG + ") " +
                             "VALUES(" + addQuotes(userPhoneNumber) + ", " + addQuotes(name) + ", " + addQuotes(dateOfBirth) + ", TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()), "
-                            + addQuotes(gender) + ", " + addQuotes(getCurrentDate()) + ", " + addQuotes(getCurrentTime()) + ");");
+                            + addQuotes(gender) + ", " + addQuotes(getCurrentDateTime()) +");");
             // executeUpdate returns the amount of rows that was updated
             if (addUser.executeUpdate() == 1) {// the account was created if the number of rows updated is 1
                 System.out.println("------------------------------------------");
@@ -200,6 +195,7 @@ public final class DatabaseUtil {
         }
         else {
             System.out.println("You already have an account. Log in instead.");
+            login(inputReader, connection);
         }
     }
 
@@ -257,7 +253,7 @@ public final class DatabaseUtil {
         System.out.println("Phone number: " + result.get(PHONE_NUMBER));
         System.out.println("Date of birth (Age): " + result.get(DATE_OF_BIRTH) + " (" + result.get(Age) + ")");
         System.out.println("Gender: " + result.get(GENDER));
-        System.out.println("Date registered: " + formatDateAndTime(result.get(DATE_OF_REG) + " " + result.get(TIME_OF_REG)));
+        System.out.println("Date registered: " + formatDateAndTime(result.get(DATE_OF_REG)));
         Menus.doLoginMenu(userPhoneNumber);
     }
 

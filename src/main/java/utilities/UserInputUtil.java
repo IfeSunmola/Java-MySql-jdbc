@@ -154,18 +154,12 @@ public final class UserInputUtil {
     }
 
     /**
-     * @return the current date
+     * @return the current date and time
      */
-    public static String getCurrentDate() {
-        return ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+    public static String getCurrentDateTime() {
+        return ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd: HH:mm:ss"));
     }
 
-    /**
-     * @return the current time
-     */
-    public static String getCurrentTime() {
-        return ZonedDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"));
-    }
     // validating user input
 
     /**
