@@ -1,4 +1,4 @@
-import utilities.Menu;
+import utilities.Menus;
 
 import java.io.IOException;
 import java.sql.Connection;
@@ -19,7 +19,7 @@ import static utilities.DatabaseUtil.getConnection;
  * */
 
 /**
- * Main/Driver class for local server
+ * Main/Driver class. All the exceptions thrown will be caught here
  *
  * @author Ife Sunmola
  */
@@ -33,7 +33,7 @@ public class Main {
                 return;
             }
             createUsersTable(connection);
-            Menu.doMainMenu();
+            Menus.doMainMenu();
         }
         catch (IOException | SQLException | ClassNotFoundException e) {
             throw new RuntimeException(e);

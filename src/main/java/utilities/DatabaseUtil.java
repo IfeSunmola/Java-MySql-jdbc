@@ -104,8 +104,12 @@ public final class DatabaseUtil {
         System.out.println("You need to log in");
         String code = sendVerificationCode(userPhoneNumber); //returns the verification code that was sent
 
-        System.out.print("Enter the verification code that was sent: ");
-        String userCode = inputReader.readLine().strip();
+
+        String userCode = "";
+        while (!userCode.equals(code)) {
+            System.out.print("Enter the verification code that was sent: ");
+            userCode = inputReader.readLine();
+        }
 
         if (userCode.equals(code)) {
             System.out.println("Account found, Log in successful");
@@ -113,11 +117,11 @@ public final class DatabaseUtil {
                     "UPDATE " + USERS_TABLE + " SET " + LAST_LOGIN_DATE + " = " + addQuotes(getCurrentDate() + " " + getCurrentTime()) +
                             " WHERE " + PHONE_NUMBER + " = " + addQuotes(userPhoneNumber) + ";");
             setLastLoginTime.executeUpdate();
-            Menu.doLoginMenu(userPhoneNumber);
+            Menus.doLoginMenu(userPhoneNumber);
         }
         else {
             System.out.println("Wrong code. Log in failed.");
-            Menu.doMainMenu();
+            Menus.doMainMenu();
         }
     }
 
@@ -147,12 +151,12 @@ public final class DatabaseUtil {
             }
             else {// session has NOT timed out
                 System.out.println("Still in session, no need to log in.");
-                Menu.doLoginMenu(userPhoneNumber);
+                Menus.doLoginMenu(userPhoneNumber);
             }
         }
         else { // user does not have an account
             System.out.println("Account not found. Log in failed");
-            Menu.doMainMenu();
+            Menus.doMainMenu();
         }
     }
 
@@ -204,17 +208,16 @@ public final class DatabaseUtil {
     /**
      * Method to allow the user to delete their account.
      *
+     * @param inputReader     used to confirm if the user wants to delete their account or not
      * @param connection      the connection to the database
      * @param userPhoneNumber the phone number of the account to delete
      * @throws IOException  if the user input could not be read
      * @throws SQLException if there was a problem with the sql server itself
      */
-    public static void deleteAccount(Connection connection, String userPhoneNumber) throws IOException, SQLException {
+    public static void deleteAccount(BufferedReader inputReader, Connection connection, String userPhoneNumber) throws IOException, SQLException {
         System.out.println("** Deleting an account **");
-
         if (numberExistsInDB(userPhoneNumber, connection)) {// there is an account to delete
             String userInput = "";
-            BufferedReader inputReader = new BufferedReader(new InputStreamReader(System.in));
             while (!userInput.equals("Y") && !userInput.equals("N")) {// confirm if the user wants to delete their account
                 System.out.println("YOUR ACCOUNT CANNOT BE RECOVERED AFTER DELETION");
                 System.out.print("Are you sure you want to delete your account? This process is IRREVERSIBLE (y/n): ");
@@ -227,23 +230,22 @@ public final class DatabaseUtil {
                 // executeUpdate returns the amount of rows that was updated
                 if (deleteUser.executeUpdate() == 1) {// the account was deleted if the number of rows updated is 1
                     System.out.println("Account deleted successfully");
-                    Menu.doMainMenu();
+                    Menus.doMainMenu();
                 }
                 else {
                     // shouldn't happen but just in case
                     System.err.println("Account could not be deleted (executeUpdate returned number != 1)");
-                    Menu.doMainMenu();
+                    Menus.doMainMenu();
                 }
             }
             else {// not confirmed, don't delete the account
                 System.out.println("Didn't confirm, account not deleted");
-                Menu.doLoginMenu(userPhoneNumber);
+                Menus.doLoginMenu(userPhoneNumber);
             }
-            inputReader.close();
         }
         else {// there is no account to delete. Shouldn't work since the user is already logged in but oh well
             System.err.println("Account not found. Delete failed");
-            Menu.doMainMenu();
+            Menus.doMainMenu();
         }
     }
 
@@ -256,7 +258,7 @@ public final class DatabaseUtil {
         System.out.println("Date of birth (Age): " + result.get(DATE_OF_BIRTH) + " (" + result.get(Age) + ")");
         System.out.println("Gender: " + result.get(GENDER));
         System.out.println("Date registered: " + formatDateAndTime(result.get(DATE_OF_REG) + " " + result.get(TIME_OF_REG)));
-        Menu.doLoginMenu(userPhoneNumber);
+        Menus.doLoginMenu(userPhoneNumber);
     }
 
     private static HashMap<String, String> getUserDetails(Connection connection, String userPhoneNumber) throws SQLException {

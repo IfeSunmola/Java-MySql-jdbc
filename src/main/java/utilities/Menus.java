@@ -10,7 +10,7 @@ import static utilities.DatabaseUtil.*;
 import static utilities.UserInputUtil.showLoginMenu;
 import static utilities.UserInputUtil.showMainMenu;
 
-public class Menu {
+public class Menus {
     private static final Connection CONNECTION;
 
     static {
@@ -47,6 +47,7 @@ public class Menu {
                 default -> System.out.println("Make a valid selection");
             }
         }
+        inputReader.close();
     }
 
     // menu that shows when the user has been logged in
@@ -64,9 +65,10 @@ public class Menu {
                 selectionWasValid = true;
             }
             else if (userInput.equals("2")) {
-                deleteAccount(CONNECTION, userPhoneNumber);
+                deleteAccount(inputReader, CONNECTION, userPhoneNumber);
                 selectionWasValid = true;
             }
         }
+        inputReader.close();
     }
 }
