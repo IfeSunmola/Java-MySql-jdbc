@@ -6,9 +6,9 @@ import java.sql.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import java.util.HashMap;
 
 import static utilities.UserInputUtil.*;
-import static utilities.UserInputUtil.getCurrentDate;
 import static utilities.ValidateUtil.sendVerificationCode;
 
 /**
@@ -19,6 +19,16 @@ import static utilities.ValidateUtil.sendVerificationCode;
  */
 public final class DatabaseUtil {
     private static final int MAX_ELAPSED_MINUTES = 720;
+    // column names
+    private static final String PHONE_NUMBER = "phone_number";
+    private static final String USER_NAME = "user_name";
+    private static final String DATE_OF_BIRTH = "date_of_birth";
+    private static final String Age = "age";
+    private static final String GENDER = "gender";
+    private static final String DATE_OF_REG = "date_of_reg";
+    private static final String TIME_OF_REG = "time_of_reg";
+    private static final String LAST_LOGIN_DATE = "last_login_time"; // change to last login date
+    private static final int NUM_COLUMNS = 8;
 
     /**
      * Method to connect to the database. The data needed (driver, url, etc.) is saved in environment variables.
@@ -52,7 +62,7 @@ public final class DatabaseUtil {
     public static void createUsersTable(Connection connection) throws SQLException {
         // if users_table does not exist in the database, create it
         PreparedStatement create = connection.prepareStatement(
-                """ 
+                """
                         CREATE TABLE IF NOT EXISTS users_table(
                         phone_number VARCHAR(10) PRIMARY KEY UNIQUE NOT NULL,
                         user_name VARCHAR(10) NOT NULL,
@@ -61,7 +71,7 @@ public final class DatabaseUtil {
                         gender VARCHAR(10) NOT NULL,
                         date_of_reg Date NOT NULL,
                         time_of_reg TIME NOT NULL,
-                        last_login_time DATETIME DEFAULT '2000-11-24 01:01:01'   
+                        last_login_time DATETIME DEFAULT '2000-11-24 01:01:01'
                         );""");
         create.executeUpdate();
 //    set the last login time to an old date as the default value so the user won't get logged in automatically if
@@ -102,9 +112,11 @@ public final class DatabaseUtil {
                     "UPDATE users_table SET last_login_time= '" + getCurrentDate() + " " + getCurrentTime() +
                             "' WHERE phone_number='" + userPhoneNumber + "'");
             setLastLoginTime.executeUpdate();
+            Menu.doLoginMenu(connection, userPhoneNumber);
         }
         else {
             System.out.println("Wrong code. Log in failed.");
+            Menu.doMainMenu(connection);
         }
     }
 
@@ -127,10 +139,12 @@ public final class DatabaseUtil {
             }
             else {// session has NOT timed out
                 System.out.println("Still in session, no need to log in.");
+                Menu.doLoginMenu(connection, userPhoneNumber);
             }
         }
         else { // user does not have an account
             System.out.println("Account not found. Log in failed");
+            Menu.doMainMenu(connection);
         }
     }
 
@@ -153,17 +167,14 @@ public final class DatabaseUtil {
         String dateOfBirth = getDateOfBirth(inputReader);
         System.out.println("--------------");
         String phoneNumber = getPhoneNumber(inputReader);
-        System.out.println("--------------");
         String gender = getGenderIdentity(inputReader);
-        String timeRegistered = getCurrentTime();
-        String dateRegistered = getCurrentDate();
 
         if (!numberExistsInDB(phoneNumber, connection)) {// the user does not have an account, create one
             PreparedStatement addUser = connection.prepareStatement(
                     "INSERT INTO users_table " +
                             "(phone_number, user_name, date_of_birth, age, gender, date_of_reg, time_of_reg) " +
                             "VALUES('" + phoneNumber + "', '" + name + "', '" + dateOfBirth + "', TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()), " +
-                            "'" + gender + "', '" + dateRegistered + "', '" + timeRegistered + "');");
+                            "'" + gender + "', '" + getCurrentDate() + "', '" + getCurrentTime() + "');");
             // executeUpdate returns the amount of rows that was updated
             if (addUser.executeUpdate() == 1) {// the account was created if the number of rows updated is 1
                 System.out.println("------------------------------------------");
@@ -223,6 +234,37 @@ public final class DatabaseUtil {
         }
     }
 
+    // method to show the profile
+    public static void showProfile(Connection connection, String userPhoneNumber) throws SQLException, IOException {
+        HashMap<String, String> result = getUserDetails(connection, userPhoneNumber);
+
+        System.out.println("** Showing profile for " + result.get(USER_NAME) + ": **");
+        System.out.println("Phone number: " + result.get(PHONE_NUMBER));
+        System.out.println("Date of birth (Age): " + result.get(DATE_OF_BIRTH) + " (" + result.get(Age) + ")");
+        System.out.println("Gender: " + result.get(GENDER));
+        System.out.println("Date registered: " + formatDateAndTime(result.get(DATE_OF_REG) + " " + result.get(TIME_OF_REG)));
+        Menu.doLoginMenu(connection, userPhoneNumber);
+    }
+
+    private static HashMap<String, String> getUserDetails(Connection connection, String userPhoneNumber) throws SQLException {
+        PreparedStatement getUserDetails = connection.prepareStatement(
+                "SELECT * FROM users_table where phone_number = '" + userPhoneNumber + "'");
+        ResultSet resultSet = getUserDetails.executeQuery();
+        HashMap<String, String> userDetails = new HashMap<>();
+        while (resultSet.next()) {
+            for (int i = 1; i < NUM_COLUMNS; i++) {
+                userDetails.put(resultSet.getMetaData().getColumnName(i), resultSet.getString(i));
+            }
+        }
+        return userDetails;
+    }
+
+    private static String formatDateAndTime(String dateAndTimeOfReg) {
+        DateTimeFormatter in = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        LocalDateTime date = LocalDateTime.parse(dateAndTimeOfReg, in);// convert the input to a DateTime
+        DateTimeFormatter out = DateTimeFormatter.ofPattern("MMM dd, yyyy 'at' h:mm a"); // convert the DateTime to the needed to be output
+        return date.format(out);
+    }
     //misc
 
     /**

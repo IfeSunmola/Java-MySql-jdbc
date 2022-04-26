@@ -26,10 +26,12 @@ public final class UserInputUtil {
      */
     public static String showMainMenu() {
         return """
-                Select an option, 1 or 2 (enter 0 to quit):
-                1. Create an account
-                2. Log in to an existing account
-                3. Delete an account
+                -------------------------------------------
+                |Select an option, 1 or 2 (enter 0 to quit)|
+                |1. Create an account                      |
+                |2. Log in to an existing account          |
+                |3. Delete an account                      |
+                --------------------------------------------
                 """;
     }
 
@@ -38,15 +40,24 @@ public final class UserInputUtil {
      */
     private static String showGenderMenu() {
         return """
-                How do you identify?
-                Select an option
-                1. Non Binary
-                2. Woman
-                3. Man
-                4. Other (type below)
+                -----------------------
+                |How do you identify? |
+                |Select an option     |
+                |1. Non Binary        |
+                |2. Woman             |
+                |3. Man               |
+                |4. Other (type below)|
+                -----------------------
                 """;
     }
 
+    public static String showLoginMenu() {
+        return """
+                ----------------------
+                |1. View your profile|
+                ----------------------
+                """;
+    }
     // asking for user input
 
     /**
