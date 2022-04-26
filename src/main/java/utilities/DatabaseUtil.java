@@ -19,7 +19,8 @@ import static utilities.ValidateUtil.sendVerificationCode;
  */
 public final class DatabaseUtil {
     private static final int MAX_ELAPSED_MINUTES = 720;
-    // column names
+    // database info. Using constants in case I need to change any name
+    private static final String USERS_TABLE = "users_table";
     private static final String PHONE_NUMBER = "phone_number";
     private static final String USER_NAME = "user_name";
     private static final String DATE_OF_BIRTH = "date_of_birth";
@@ -62,7 +63,7 @@ public final class DatabaseUtil {
     public static void createUsersTable(Connection connection) throws SQLException {
         // if users_table does not exist in the database, create it
         PreparedStatement create = connection.prepareStatement(
-                "CREATE TABLE IF NOT EXISTS users_table("
+                "CREATE TABLE IF NOT EXISTS " + USERS_TABLE + "("
                         + PHONE_NUMBER + " VARCHAR(10) PRIMARY KEY UNIQUE NOT NULL,"
                         + USER_NAME + " VARCHAR(10) NOT NULL,"
                         + DATE_OF_BIRTH + " DATE NOT NULL,"
@@ -79,11 +80,11 @@ public final class DatabaseUtil {
     // methods to log the user in
     private static LocalDateTime getLastLoginTime(Connection connection, String userPhoneNumber) throws SQLException {
         PreparedStatement getLastLoginTime = connection.prepareStatement(
-                "SELECT last_login_time FROM users_table WHERE phone_number= '" + userPhoneNumber + "';");
+                "SELECT " + LAST_LOGIN_DATE + " FROM " + USERS_TABLE + " WHERE " + PHONE_NUMBER + " = " + addQuotes(userPhoneNumber) + ";");
         ResultSet result = getLastLoginTime.executeQuery();
         LocalDateTime lastTime = null;
         if (result.next()) {
-            String temp = result.getString("last_login_time");
+            String temp = result.getString(LAST_LOGIN_DATE);
             lastTime = LocalDateTime.parse(temp, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
         }
         return lastTime;
@@ -108,8 +109,8 @@ public final class DatabaseUtil {
         if (userCode.equals(code)) {
             System.out.println("Account found, Log in successful");
             PreparedStatement setLastLoginTime = connection.prepareStatement(
-                    "UPDATE users_table SET last_login_time= '" + getCurrentDate() + " " + getCurrentTime() +
-                            "' WHERE phone_number='" + userPhoneNumber + "'");
+                    "UPDATE " + USERS_TABLE + " SET " + LAST_LOGIN_DATE + " = " + addQuotes(getCurrentDate() + " " + getCurrentTime()) +
+                            " WHERE " + PHONE_NUMBER + " = " + addQuotes(userPhoneNumber) + ";");
             setLastLoginTime.executeUpdate();
             Menu.doLoginMenu(userPhoneNumber);
         }
@@ -117,6 +118,13 @@ public final class DatabaseUtil {
             System.out.println("Wrong code. Log in failed.");
             Menu.doMainMenu();
         }
+    }
+
+    private static String addQuotes(String string) {
+        StringBuilder result = new StringBuilder(string);
+        result.insert(0, "'");
+        result.insert(result.length(), "'");
+        return result.toString();
     }
 
     /**
@@ -170,10 +178,9 @@ public final class DatabaseUtil {
 
         if (!numberExistsInDB(userPhoneNumber, connection)) {// the user does not have an account, create one
             PreparedStatement addUser = connection.prepareStatement(
-                    "INSERT INTO users_table " +
-                            "(phone_number, user_name, date_of_birth, age, gender, date_of_reg, time_of_reg) " +
-                            "VALUES('" + userPhoneNumber + "', '" + name + "', '" + dateOfBirth + "', TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()), " +
-                            "'" + gender + "', '" + getCurrentDate() + "', '" + getCurrentTime() + "');");
+                    "INSERT INTO " + USERS_TABLE + " (" + PHONE_NUMBER + ", " + USER_NAME + ", " + DATE_OF_BIRTH + ", " + Age + ", " + GENDER + ", " + DATE_OF_REG + ", " + TIME_OF_REG + ") " +
+                            "VALUES(" + addQuotes(userPhoneNumber) + ", " + addQuotes(name) + ", " + addQuotes(dateOfBirth) + ", TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()), "
+                            + addQuotes(gender) + ", " + addQuotes(getCurrentDate()) + ", " + addQuotes(getCurrentTime()) + ");");
             // executeUpdate returns the amount of rows that was updated
             if (addUser.executeUpdate() == 1) {// the account was created if the number of rows updated is 1
                 System.out.println("------------------------------------------");
@@ -214,7 +221,7 @@ public final class DatabaseUtil {
             }
             if (userInput.equals("Y")) {// delete the account if confirmed
                 PreparedStatement deleteUser = connection.prepareStatement(
-                        "DELETE FROM users_table WHERE phone_number = '" + phoneNumber + "';");
+                        "DELETE FROM " + USERS_TABLE + " WHERE " + PHONE_NUMBER + " = " + addQuotes(phoneNumber) + ";");
                 // executeUpdate returns the amount of rows that was updated
                 if (deleteUser.executeUpdate() == 1) {// the account was deleted if the number of rows updated is 1
                     System.out.println("Account deleted successfully");
@@ -247,7 +254,7 @@ public final class DatabaseUtil {
 
     private static HashMap<String, String> getUserDetails(Connection connection, String userPhoneNumber) throws SQLException {
         PreparedStatement getUserDetails = connection.prepareStatement(
-                "SELECT * FROM users_table where phone_number = '" + userPhoneNumber + "'");
+                "SELECT * FROM " + USERS_TABLE + " WHERE " + PHONE_NUMBER + " = " + addQuotes(userPhoneNumber) + "");
         ResultSet resultSet = getUserDetails.executeQuery();
         HashMap<String, String> userDetails = new HashMap<>();
         while (resultSet.next()) {
@@ -277,11 +284,11 @@ public final class DatabaseUtil {
     private static boolean numberExistsInDB(String userPhoneNumber, Connection connection) throws SQLException {
         PreparedStatement getPhoneNumber = connection.prepareStatement(
                 //get the user's phone number from db.
-                "SELECT phone_number FROM users_table WHERE phone_number= '" + userPhoneNumber + "';");
+                "SELECT " + PHONE_NUMBER + " FROM " + USERS_TABLE + " WHERE " + PHONE_NUMBER + " = " + addQuotes(userPhoneNumber) + ";");
         ResultSet result = getPhoneNumber.executeQuery();// store the result
         String numberInDb = "";
         if (result.next()) {//.next returns true if there is a data in the ResultSet.
-            numberInDb = result.getString("phone_number");// phone_number is the column name
+            numberInDb = result.getString(PHONE_NUMBER);// phone_number is the column name
         }
         return numberInDb.equals(userPhoneNumber);
     }
