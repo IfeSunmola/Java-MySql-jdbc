@@ -61,18 +61,39 @@ public final class DatabaseUtil {
      */
     public static void createUsersTable(Connection connection) throws SQLException {
         // if users_table does not exist in the database, create it
+        //                        '" + getCurrentDate() + "'
+//        PreparedStatement create = connection.prepareStatement(
+//                """
+//                        CREATE TABLE IF NOT EXISTS users_table(
+//                        phone_number VARCHAR(10) PRIMARY KEY UNIQUE NOT NULL,
+//                        user_name VARCHAR(10) NOT NULL,
+//                        date_of_birth DATE NOT NULL,
+//                        age INT NOT NULL,
+//                        gender VARCHAR(10) NOT NULL,
+//                        date_of_reg Date NOT NULL,
+//                        time_of_reg TIME NOT NULL,
+//                        last_login_time DATETIME DEFAULT '2000-11-24 01:01:01'
+//                        );""");
+//        PreparedStatement create = connection.prepareStatement(
+//                "CREATE TABLE IF NOT EXISTS users_table("
+//                        + "'" + PHONE_NUMBER + "' VARCHAR(10) PRIMARY KEY UNIQUE NOT NULL,"
+//                        + "'" + USER_NAME + "' VARCHAR(10) PRIMARY KEY UNIQUE NOT NULL,"
+//                        + "'" + DATE_OF_BIRTH + "' VARCHAR(10) PRIMARY KEY UNIQUE NOT NULL,"
+//                        + "'" + Age + "' VARCHAR(10) PRIMARY KEY UNIQUE NOT NULL,"
+//                        + "'" + DATE_OF_REG + "' VARCHAR(10) PRIMARY KEY UNIQUE NOT NULL,"
+//                        + "'" + TIME_OF_REG + "' VARCHAR(10) PRIMARY KEY UNIQUE NOT NULL,"
+//                        + "'" + LAST_LOGIN_DATE + "' VARCHAR(10) PRIMARY KEY UNIQUE NOT NULL)");
+
         PreparedStatement create = connection.prepareStatement(
-                """
-                        CREATE TABLE IF NOT EXISTS users_table(
-                        phone_number VARCHAR(10) PRIMARY KEY UNIQUE NOT NULL,
-                        user_name VARCHAR(10) NOT NULL,
-                        date_of_birth DATE NOT NULL,
-                        age INT NOT NULL,
-                        gender VARCHAR(10) NOT NULL,
-                        date_of_reg Date NOT NULL,
-                        time_of_reg TIME NOT NULL,
-                        last_login_time DATETIME DEFAULT '2000-11-24 01:01:01'
-                        );""");
+                "CREATE TABLE IF NOT EXISTS users_table("
+                        + PHONE_NUMBER + " VARCHAR(10) PRIMARY KEY UNIQUE NOT NULL,"
+                        + USER_NAME + " VARCHAR(10) NOT NULL,"
+                        + DATE_OF_BIRTH + " DATE NOT NULL,"
+                        + Age + " INT NOT NULL,"
+                        + GENDER + " VARCHAR(10) NOT NULL,"
+                        + DATE_OF_REG + " Date NOT NULL,"
+                        + TIME_OF_REG + " TIME NOT NULL,"
+                        + LAST_LOGIN_DATE + " DATETIME DEFAULT '2000-11-24 01:01:01')");
         create.executeUpdate();
 //    set the last login time to an old date as the default value so the user won't get logged in automatically if
 //    they haven't logged in before
