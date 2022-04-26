@@ -26,11 +26,11 @@ public final class UserInputUtil {
      */
     public static String showMainMenu() {
         return """
-                -------------------------------------------
-                |Select an option, 1 or 2 (enter 0 to quit)|
-                |1. Create an account                      |
-                |2. Log in to an existing account          |
-                --------------------------------------------
+                -------------------------------------
+                |Select an option, (enter 0 to quit)|
+                |1. Create an account               |
+                |2. Log in to an existing account   |
+                -------------------------------------
                 """;
     }
 
@@ -52,10 +52,11 @@ public final class UserInputUtil {
 
     public static String showLoginMenu() {
         return """
-                ------------------------
-                |1. View your profile  |
-                |2. Delete your account|
-                ------------------------
+                -------------------------------------
+                |Select an option, (enter 0 to quit)|
+                |1. View your profile               |
+                |2. Delete your account             |
+                -------------------------------------
                 """;
     }
     // asking for user input

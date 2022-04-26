@@ -59,14 +59,19 @@ public class Menus {
         while (!selectionWasValid) {
             System.out.print("Your response: ");
             userInput = inputReader.readLine().strip();
-            if (userInput.equals("1")) {
-                // view your profile
-                showProfile(CONNECTION, userPhoneNumber);
-                selectionWasValid = true;
-            }
-            else if (userInput.equals("2")) {
-                deleteAccount(inputReader, CONNECTION, userPhoneNumber);
-                selectionWasValid = true;
+            switch (userInput) {
+                case "1" -> {
+                    showProfile(CONNECTION, userPhoneNumber);
+                    selectionWasValid = true;
+                }
+                case "2" -> {
+                    deleteAccount(inputReader, CONNECTION, userPhoneNumber);
+                    selectionWasValid = true;
+                }
+                case "0" -> {
+                    System.out.println("Have a nice day");
+                    selectionWasValid = true;
+                }
             }
         }
         inputReader.close();
