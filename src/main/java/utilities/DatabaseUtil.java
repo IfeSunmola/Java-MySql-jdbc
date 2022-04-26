@@ -27,7 +27,7 @@ public final class DatabaseUtil {
     private static final String Age = "age";
     private static final String GENDER = "gender";
     private static final String DATE_OF_REG = "date_of_reg";
-    private static final String LAST_LOGIN_DATE = "last_login_time"; // change to last login date
+    private static final String LAST_LOGIN_DATE = "last_login_date"; // change to last login date
     private static final int NUM_COLUMNS = 8;
 
     /**
