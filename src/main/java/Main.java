@@ -33,7 +33,7 @@ public class Main {
                 return;
             }
             createUsersTable(connection);
-            Menu.doMainMenu(connection);
+            Menu.doMainMenu();
         }
         catch (IOException | SQLException | ClassNotFoundException e) {
             throw new RuntimeException(e);

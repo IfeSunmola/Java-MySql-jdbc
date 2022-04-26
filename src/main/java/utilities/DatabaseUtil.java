@@ -112,11 +112,11 @@ public final class DatabaseUtil {
                     "UPDATE users_table SET last_login_time= '" + getCurrentDate() + " " + getCurrentTime() +
                             "' WHERE phone_number='" + userPhoneNumber + "'");
             setLastLoginTime.executeUpdate();
-            Menu.doLoginMenu(connection, userPhoneNumber);
+            Menu.doLoginMenu(userPhoneNumber);
         }
         else {
             System.out.println("Wrong code. Log in failed.");
-            Menu.doMainMenu(connection);
+            Menu.doMainMenu();
         }
     }
 
@@ -139,12 +139,12 @@ public final class DatabaseUtil {
             }
             else {// session has NOT timed out
                 System.out.println("Still in session, no need to log in.");
-                Menu.doLoginMenu(connection, userPhoneNumber);
+                Menu.doLoginMenu(userPhoneNumber);
             }
         }
         else { // user does not have an account
             System.out.println("Account not found. Log in failed");
-            Menu.doMainMenu(connection);
+            Menu.doMainMenu();
         }
     }
 
@@ -243,7 +243,7 @@ public final class DatabaseUtil {
         System.out.println("Date of birth (Age): " + result.get(DATE_OF_BIRTH) + " (" + result.get(Age) + ")");
         System.out.println("Gender: " + result.get(GENDER));
         System.out.println("Date registered: " + formatDateAndTime(result.get(DATE_OF_REG) + " " + result.get(TIME_OF_REG)));
-        Menu.doLoginMenu(connection, userPhoneNumber);
+        Menu.doLoginMenu(userPhoneNumber);
     }
 
     private static HashMap<String, String> getUserDetails(Connection connection, String userPhoneNumber) throws SQLException {

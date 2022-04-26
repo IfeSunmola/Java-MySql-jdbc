@@ -22,7 +22,7 @@ public class Menu {
         }
     }
 
-    public static void doMainMenu(Connection connection) throws IOException, SQLException {
+    public static void doMainMenu() throws IOException, SQLException {
         BufferedReader inputReader = new BufferedReader(new InputStreamReader(System.in));
         boolean selectionWasValid = false;
         String userInput;
@@ -33,15 +33,15 @@ public class Menu {
             userInput = inputReader.readLine().strip();
             switch (userInput) {
                 case "1" -> {
-                    createAccount(inputReader, connection);
+                    createAccount(inputReader, CONNECTION);
                     selectionWasValid = true;
                 }
                 case "2" -> {
-                    login(inputReader, connection);
+                    login(inputReader, CONNECTION);
                     selectionWasValid = true;
                 }
                 case "3" -> {
-                    deleteAccount(inputReader, connection);
+                    deleteAccount(inputReader, CONNECTION);
                     selectionWasValid = true;
                 }
                 case "0" -> {
@@ -54,7 +54,7 @@ public class Menu {
     }
 
     // menu that shows when the user has been logged in
-    public static void doLoginMenu(Connection connection, String userPhoneNumber) throws IOException, SQLException {
+    public static void doLoginMenu(String userPhoneNumber) throws IOException, SQLException {
         BufferedReader inputReader = new BufferedReader(new InputStreamReader(System.in));
         boolean selectionWasValid = false;
         String userInput;
@@ -64,7 +64,7 @@ public class Menu {
             userInput = inputReader.readLine().strip();
             if (userInput.equals("1")){
                 // view your profile
-                showProfile(connection, userPhoneNumber);
+                showProfile(CONNECTION, userPhoneNumber);
                 selectionWasValid = true;
             }
         }
