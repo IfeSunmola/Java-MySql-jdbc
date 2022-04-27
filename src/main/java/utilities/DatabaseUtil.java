@@ -88,10 +88,9 @@ public final class DatabaseUtil {
         cookies.close();
     }
 
-    private static boolean needsToLogin(String userPhoneNumber) throws IOException {
+    private static boolean needsToLogin(String userPhoneNumber) {
         boolean needsToLogin = false;
-        try {
-            BufferedReader fileReader = new BufferedReader(new FileReader(FAKE_COOKIE_FILENAME));
+        try( BufferedReader fileReader = new BufferedReader(new FileReader(FAKE_COOKIE_FILENAME))) {
             String cookieDetails = fileReader.readLine();
             String numberInCookie = cookieDetails.substring(0, userPhoneNumber.length());// numbers will be 10
             String dateInCookie = cookieDetails.substring(userPhoneNumber.length() + 1);
@@ -141,14 +140,14 @@ public final class DatabaseUtil {
                 makeFakeCookies(userPhoneNumber);
                 System.out.println("You will be logged in for " + MAX_DAYS_FOR_LOGIN + " days");
             }
-            else if (userCode.equals("N")) {
+            else {
                 System.out.println("You will need to enter your password the next time you log in");
             }
-            Menus.doLoginMenu(userPhoneNumber);
+            Menus.doLoginMenu(connection, userPhoneNumber);
         }
         else {
             System.out.println("Wrong code. Log in failed.");
-            Menus.doMainMenu();
+            Menus.doMainMenu(connection);
         }
     }
 
@@ -182,12 +181,12 @@ public final class DatabaseUtil {
             }
             else {// session has NOT timed out
                 System.out.println("Still in session, no need to log in.");
-                Menus.doLoginMenu(userPhoneNumber);
+                Menus.doLoginMenu(connection, userPhoneNumber);
             }
         }
         else { // user does not have an account
             System.out.println("Account not found. Log in failed");
-            Menus.doMainMenu();
+            Menus.doMainMenu(connection);
         }
     }
 
@@ -226,7 +225,7 @@ public final class DatabaseUtil {
             }
             else {// failed
                 // shouldn't happen but just in case
-                System.err.println("Account could not be created (executeUpdate returned number != 1)");
+                System.out.println("Account could not be created (executeUpdate returned number != 1)");
             }
         }
         else {
@@ -262,22 +261,22 @@ public final class DatabaseUtil {
                 // executeUpdate returns the amount of rows that was updated
                 if (deleteUser.executeUpdate() == 1) {// the account was deleted if the number of rows updated is 1
                     System.out.println("Account deleted successfully");
-                    Menus.doMainMenu();
+                    Menus.doMainMenu(connection);
                 }
                 else {
                     // shouldn't happen but just in case
-                    System.err.println("Account could not be deleted (executeUpdate returned number != 1)");
-                    Menus.doMainMenu();
+                    System.out.println("Account could not be deleted (executeUpdate returned number != 1)");
+                    Menus.doMainMenu(connection);
                 }
             }
             else {// not confirmed, don't delete the account
                 System.out.println("Didn't confirm, account not deleted");
-                Menus.doLoginMenu(userPhoneNumber);
+                Menus.doLoginMenu(connection, userPhoneNumber);
             }
         }
         else {// there is no account to delete. Shouldn't work since the user is already logged in but oh well
-            System.err.println("Account not found. Delete failed");
-            Menus.doMainMenu();
+            System.out.println("Account not found. Delete failed");
+            Menus.doMainMenu(connection);
         }
     }
 
@@ -290,7 +289,7 @@ public final class DatabaseUtil {
         System.out.println("Date of birth (Age): " + result.get(DATE_OF_BIRTH) + " (" + result.get(Age) + ")");
         System.out.println("Gender: " + result.get(GENDER));
         System.out.println("Date registered: " + formatDateAndTime(result.get(DATE_OF_REG)));
-        Menus.doLoginMenu(userPhoneNumber);
+        Menus.doLoginMenu(connection, userPhoneNumber);
     }
 
     private static HashMap<String, String> getUserDetails(Connection connection, String userPhoneNumber) throws SQLException {
@@ -306,9 +305,9 @@ public final class DatabaseUtil {
         return userDetails;
     }
 
-    public static void logout() throws SQLException, IOException {
+    public static void logout(Connection connection) throws SQLException, IOException {
         System.out.println("You are now logged out");
-        Menus.doMainMenu();
+        Menus.doMainMenu(connection);
     }
 
     private static String formatDateAndTime(String dateAndTimeOfReg) {
