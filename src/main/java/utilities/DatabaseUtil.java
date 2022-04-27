@@ -1,8 +1,11 @@
 package utilities;
 
 import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.sql.*;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
@@ -18,7 +21,11 @@ import static utilities.ValidateUtil.sendVerificationCode;
  * @author Ife Sunmola
  */
 public final class DatabaseUtil {
-    private static final int MAX_ELAPSED_MINUTES = 9000;
+    // for keeping the user logged in
+    private static final int MAX_DAYS_FOR_LOGIN = 5;
+    private static final String FAKE_COOKIE_FILENAME = "fakeCookies.youWereHacked";
+    // for date/time formatting
+    private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     // database info. Using constants in case I need to change any name
     private static final String USERS_TABLE = "users_table";
     private static final String PHONE_NUMBER = "phone_number";
@@ -27,8 +34,7 @@ public final class DatabaseUtil {
     private static final String Age = "age";
     private static final String GENDER = "gender";
     private static final String DATE_OF_REG = "date_of_reg";
-    private static final String LAST_LOGIN_DATE = "last_login_date"; // change to last login date
-    private static final int NUM_COLUMNS = 8;
+    private static final int NUM_COLUMNS = 7;
 
     /**
      * Method to connect to the database. The data needed (driver, url, etc.) is saved in environment variables.
@@ -68,38 +74,52 @@ public final class DatabaseUtil {
                         + DATE_OF_BIRTH + " DATE NOT NULL,"
                         + Age + " INT NOT NULL,"
                         + GENDER + " VARCHAR(10) NOT NULL,"
-                        + DATE_OF_REG + " DATETIME NOT NULL,"
-                        + LAST_LOGIN_DATE + " DATETIME DEFAULT '2000-11-24 01:01:01')");
+                        + DATE_OF_REG + " DATETIME NOT NULL);");
         create.executeUpdate();
 //    set the last login time to an old date as the default value so the user won't get logged in automatically if
 //    they haven't logged in before
     }
 
-    // methods to log the user in
-    private static LocalDateTime getLastLoginTime(Connection connection, String userPhoneNumber) throws SQLException {
-        PreparedStatement getLastLoginTime = connection.prepareStatement(
-                "SELECT " + LAST_LOGIN_DATE + " FROM " + USERS_TABLE + " WHERE " + PHONE_NUMBER + " = " + addQuotes(userPhoneNumber) + ";");
-        ResultSet result = getLastLoginTime.executeQuery();
-        LocalDateTime lastTime = null;
-        if (result.next()) {
-            String temp = result.getString(LAST_LOGIN_DATE);
-            lastTime = LocalDateTime.parse(temp, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-        }
-        return lastTime;
+    private static void makeFakeCookies(String phoneNumber) throws IOException {
+        FileWriter cookies = new FileWriter(FAKE_COOKIE_FILENAME);
+        LocalDateTime dateTime = LocalDateTime.now().plus(Duration.of(10, ChronoUnit.MINUTES));
+
+        cookies.write(phoneNumber + " " + DATE_TIME_FORMATTER.format(dateTime));
+        cookies.close();
     }
 
-    private static boolean sessionTimedOut(Connection connection, String userPhoneNumber) throws SQLException {
-        // returns true if the session has timed out and false if not
-        // session has timed out if 720 minutes (12 hours)  has passed since the last login time
-        LocalDateTime lastLoginTime = getLastLoginTime(connection, userPhoneNumber);
-        long elapsed = ChronoUnit.MINUTES.between(lastLoginTime, LocalDateTime.now());
-        return elapsed >= MAX_ELAPSED_MINUTES;
+    private static boolean needsToLogin(String userPhoneNumber) throws IOException {
+        boolean needsToLogin = false;
+        try {
+            BufferedReader fileReader = new BufferedReader(new FileReader(FAKE_COOKIE_FILENAME));
+            String cookieDetails = fileReader.readLine();
+            String numberInCookie = cookieDetails.substring(0, userPhoneNumber.length());// numbers will be 10
+            String dateInCookie = cookieDetails.substring(userPhoneNumber.length() + 1);
+
+            LocalDateTime dateTimeFromFile = LocalDateTime.parse(dateInCookie, DATE_TIME_FORMATTER);
+
+            long elapsed = ChronoUnit.MINUTES.between(LocalDateTime.now(), dateTimeFromFile);
+            if (!numberInCookie.equals(userPhoneNumber)) { // there's a cookie, but for another user
+                System.out.println("Invalid session. Cookie for another user detected");
+                needsToLogin = true;
+            }
+            if (elapsed <= 0) {
+                System.out.println("Session has expired, log in again");
+                needsToLogin = true;
+            }
+        }
+        catch (Exception e) {// catching all exceptions because the file can be unpredictable
+
+            System.out.println("File could not be parsed because you decided to mess with " +
+                    FAKE_COOKIE_FILENAME + " ¯\\_༼ •́ ͜ʖ •̀ ༽_/¯");
+        }
+        return needsToLogin;
     }
 
     private static void doLogin(BufferedReader inputReader, Connection connection, String userPhoneNumber) throws SQLException, IOException {
         System.out.println("You need to log in");
         String code = sendVerificationCode(userPhoneNumber); //returns the verification code that was sent
-
+        System.out.println(code);
         String userCode = "";
         int attempts = 5;
         while (!code.equals(userCode) && attempts > 0) {
@@ -110,16 +130,30 @@ public final class DatabaseUtil {
 
         if (userCode.equals(code)) { // always true
             System.out.println("Account found, Log in successful");
-            PreparedStatement setLastLoginTime = connection.prepareStatement(
-                    "UPDATE " + USERS_TABLE + " SET " + LAST_LOGIN_DATE + " = " + addQuotes(getCurrentDateTime()) +
-                            " WHERE " + PHONE_NUMBER + " = " + addQuotes(userPhoneNumber) + ";");
-            setLastLoginTime.executeUpdate();
+
+            // probably shouldn't use userCode
+            while (!userCode.equals("Y") && !userCode.equals("N")) {// confirm if the user wants to delete their account
+                System.out.print("Do you want to stay logged in for the next " + MAX_DAYS_FOR_LOGIN + " days? (y/n)?: ");
+                userCode = inputReader.readLine().toUpperCase().strip();
+            }
+
+            if (userCode.equals("Y")) {
+                makeFakeCookies(userPhoneNumber);
+                System.out.println("You will be logged in for " + MAX_DAYS_FOR_LOGIN + " days");
+            }
+            else if (userCode.equals("N")) {
+                System.out.println("You will need to enter your password the next time you log in");
+            }
             Menus.doLoginMenu(userPhoneNumber);
         }
         else {
             System.out.println("Wrong code. Log in failed.");
             Menus.doMainMenu();
         }
+    }
+
+    private static char getYorNChoice() {
+        return ' ';
     }
 
     private static String addQuotes(String string) {
@@ -143,7 +177,7 @@ public final class DatabaseUtil {
         String userPhoneNumber = getPhoneNumber(inputReader);// ask for the user's phone number to log in
 
         if (numberExistsInDB(userPhoneNumber, connection)) { // user has an account
-            if (sessionTimedOut(connection, userPhoneNumber)) { // session has timed out
+            if (needsToLogin(userPhoneNumber)) { // session has timed out
                 doLogin(inputReader, connection, userPhoneNumber);// log the user in
             }
             else {// session has NOT timed out
@@ -278,8 +312,7 @@ public final class DatabaseUtil {
     }
 
     private static String formatDateAndTime(String dateAndTimeOfReg) {
-        DateTimeFormatter in = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-        LocalDateTime date = LocalDateTime.parse(dateAndTimeOfReg, in);// convert the input to a DateTime
+        LocalDateTime date = LocalDateTime.parse(dateAndTimeOfReg, DATE_TIME_FORMATTER);// convert the input to a DateTime
         DateTimeFormatter out = DateTimeFormatter.ofPattern("MMM dd, yyyy 'at' h:mm a"); // convert the DateTime to the needed to be output
         return date.format(out);
     }

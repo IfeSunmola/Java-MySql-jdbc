@@ -32,11 +32,11 @@ public final class ValidateUtil {
 
         String code = getVerificationCode(); // generate verification code to send to the user
 
-        Message message = Message.creator(
-                new PhoneNumber(userPhoneNumber),
-                new PhoneNumber(PHONE_NUMBER),
-                "Verification code is: " + code
-        ).create(); // send the code
+//        Message message = Message.creator(
+//                new PhoneNumber(userPhoneNumber),
+//                new PhoneNumber(PHONE_NUMBER),
+//                "Verification code is: " + code
+//        ).create(); // send the code
         return code;
     }
 }
