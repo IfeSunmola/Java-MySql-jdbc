@@ -16,6 +16,7 @@ import static utilities.DatabaseUtil.getConnection;
  *  name should be in format Firstname
  *  change api keys to store in db
  *  name should not have spaces, clean up user input
+ *  make logging in/out much better
  * */
 
 /**

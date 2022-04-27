@@ -272,6 +272,11 @@ public final class DatabaseUtil {
         return userDetails;
     }
 
+    public static void logout() throws SQLException, IOException {
+        System.out.println("You are now logged out");
+        Menus.doMainMenu();
+    }
+
     private static String formatDateAndTime(String dateAndTimeOfReg) {
         DateTimeFormatter in = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         LocalDateTime date = LocalDateTime.parse(dateAndTimeOfReg, in);// convert the input to a DateTime

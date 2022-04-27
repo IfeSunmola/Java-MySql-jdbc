@@ -56,6 +56,7 @@ public final class UserInputUtil {
                 |Select an option, (enter 0 to quit)|
                 |1. View your profile               |
                 |2. Delete your account             |
+                |3. Log out                         |
                 -------------------------------------
                 """;
     }

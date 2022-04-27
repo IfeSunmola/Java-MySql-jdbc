@@ -68,6 +68,11 @@ public class Menus {
                     deleteAccount(inputReader, CONNECTION, userPhoneNumber);
                     selectionWasValid = true;
                 }
+
+                case "3" ->{
+                    logout();
+                    selectionWasValid = true;
+                }
                 case "0" -> {
                     System.out.println("Have a nice day");
                     selectionWasValid = true;
