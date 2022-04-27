@@ -8,6 +8,8 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoUnit;
 
+import static utilities.ValidateUtil.clearScreen;
+
 /**
  * This class contains all the functions related to getting user input.<br>All the related exceptions will be caught in
  * the Main class
@@ -24,7 +26,8 @@ public final class UserInputUtil {
     /**
      * @return String containing the main menu options
      */
-    public static String showMainMenu() {
+    public static String showMainMenu() throws IOException, InterruptedException {
+        clearScreen();
         return """
                 -------------------------------------
                 |Select an option, (enter 0 to quit)|
@@ -50,7 +53,8 @@ public final class UserInputUtil {
                 """;
     }
 
-    public static String showLoginMenu() {
+    public static String showLoginMenu() throws IOException, InterruptedException {
+        clearScreen();
         return """
                 -------------------------------------
                 |Select an option, (enter 0 to quit)|

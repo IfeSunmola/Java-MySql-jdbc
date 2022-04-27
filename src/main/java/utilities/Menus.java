@@ -9,6 +9,7 @@ import java.sql.SQLException;
 import static utilities.DatabaseUtil.*;
 import static utilities.UserInputUtil.showLoginMenu;
 import static utilities.UserInputUtil.showMainMenu;
+import static utilities.ValidateUtil.clearScreen;
 
 public class Menus {
     private static final Connection CONNECTION;
@@ -22,7 +23,7 @@ public class Menus {
         }
     }
 
-    public static void doMainMenu() throws IOException, SQLException {
+    public static void doMainMenu() throws IOException, SQLException, InterruptedException {
         BufferedReader inputReader = new BufferedReader(new InputStreamReader(System.in));
         boolean selectionWasValid = false;
         String userInput;
@@ -41,7 +42,7 @@ public class Menus {
                     selectionWasValid = true;
                 }
                 case "0" -> {
-                    System.out.println("Have a nice day");
+                    System.out.println("SHEEEEEEEEEEEEEEEEEEEESH");
                     selectionWasValid = true;
                 }
                 default -> System.out.println("Make a valid selection");
@@ -51,7 +52,7 @@ public class Menus {
     }
 
     // menu that shows when the user has been logged in
-    public static void doLoginMenu(String userPhoneNumber) throws IOException, SQLException {
+    public static void doLoginMenu(String userPhoneNumber) throws IOException, SQLException, InterruptedException {
         BufferedReader inputReader = new BufferedReader(new InputStreamReader(System.in));
         boolean selectionWasValid = false;
         String userInput;

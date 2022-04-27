@@ -9,6 +9,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 
 import static utilities.UserInputUtil.*;
+import static utilities.ValidateUtil.clearScreen;
 import static utilities.ValidateUtil.sendVerificationCode;
 
 /**
@@ -96,7 +97,7 @@ public final class DatabaseUtil {
         return elapsed >= MAX_ELAPSED_MINUTES;
     }
 
-    private static void doLogin(BufferedReader inputReader, Connection connection, String userPhoneNumber) throws SQLException, IOException {
+    private static void doLogin(BufferedReader inputReader, Connection connection, String userPhoneNumber) throws SQLException, IOException, InterruptedException {
         System.out.println("You need to log in");
         String code = sendVerificationCode(userPhoneNumber); //returns the verification code that was sent
 
@@ -138,7 +139,7 @@ public final class DatabaseUtil {
      * @throws IOException  if the user input could not be read
      * @throws SQLException if there was a problem with the sql server itself
      */
-    public static void login(BufferedReader inputReader, Connection connection) throws IOException, SQLException {
+    public static void login(BufferedReader inputReader, Connection connection) throws IOException, SQLException, InterruptedException {
         System.out.println("** Login to an existing account **");
         String userPhoneNumber = getPhoneNumber(inputReader);// ask for the user's phone number to log in
 
@@ -169,7 +170,7 @@ public final class DatabaseUtil {
      * @throws IOException  if the user input could not be read
      * @throws SQLException if there was a problem with the sql server itself
      */
-    public static void createAccount(BufferedReader inputReader, Connection connection) throws IOException, SQLException {
+    public static void createAccount(BufferedReader inputReader, Connection connection) throws IOException, SQLException, InterruptedException {
         System.out.println("** Creating an account **");
         String name = getName(inputReader);
         System.out.println("--------------");
@@ -212,7 +213,7 @@ public final class DatabaseUtil {
      * @throws IOException  if the user input could not be read
      * @throws SQLException if there was a problem with the sql server itself
      */
-    public static void deleteAccount(BufferedReader inputReader, Connection connection, String userPhoneNumber) throws IOException, SQLException {
+    public static void deleteAccount(BufferedReader inputReader, Connection connection, String userPhoneNumber) throws IOException, SQLException, InterruptedException {
         System.out.println("** Deleting an account **");
         if (numberExistsInDB(userPhoneNumber, connection)) {// there is an account to delete
             String userInput = "";
@@ -248,9 +249,8 @@ public final class DatabaseUtil {
     }
 
     // method to show the profile
-    public static void showProfile(Connection connection, String userPhoneNumber) throws SQLException, IOException {
+    public static void showProfile(Connection connection, String userPhoneNumber) throws SQLException, IOException, InterruptedException {
         HashMap<String, String> result = getUserDetails(connection, userPhoneNumber);
-
         System.out.println("** Showing profile for " + result.get(USER_NAME) + ": **");
         System.out.println("Phone number: " + result.get(PHONE_NUMBER));
         System.out.println("Date of birth (Age): " + result.get(DATE_OF_BIRTH) + " (" + result.get(Age) + ")");

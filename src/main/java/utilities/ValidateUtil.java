@@ -4,6 +4,8 @@ import com.twilio.Twilio;
 import com.twilio.rest.api.v2010.account.Message;
 import com.twilio.type.PhoneNumber;
 
+import java.io.IOException;
+
 /**
  * This class contains all the methods that will be used to validate the user
  *
@@ -38,5 +40,14 @@ public final class ValidateUtil {
                 "Verification code is: " + code
         ).create(); // send the code
         return code;
+    }
+
+    // misc change later
+    public static void clearScreen() throws IOException, InterruptedException {
+        final String os = System.getProperty("os.name");
+        if (os.contains("Windows"))
+            new ProcessBuilder("cmd", "/c", "cls").inheritIO().start().waitFor();
+        else
+            Runtime.getRuntime().exec("clear");
     }
 }

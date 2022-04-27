@@ -6,6 +6,7 @@ import java.sql.SQLException;
 
 import static utilities.DatabaseUtil.createUsersTable;
 import static utilities.DatabaseUtil.getConnection;
+import static utilities.ValidateUtil.clearScreen;
 
 /*
  * Todo:
@@ -26,16 +27,17 @@ import static utilities.DatabaseUtil.getConnection;
 public class Main {
     public static void main(String[] args) {
 
-        // no need to close inputReader and connection since the try is used like this
         try (Connection connection = getConnection()) {
+            clearScreen();
             if (connection == null) {
                 System.err.println("Connection failed.");
                 return;
             }
             createUsersTable(connection);
+
             Menus.doMainMenu();
         }
-        catch (IOException | SQLException | ClassNotFoundException e) {
+        catch (IOException | SQLException | InterruptedException | ClassNotFoundException e) {
             throw new RuntimeException(e);
         }
     }
