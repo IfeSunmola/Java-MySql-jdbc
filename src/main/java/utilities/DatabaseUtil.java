@@ -43,7 +43,7 @@ public final class DatabaseUtil {
      * @throws SQLException           if there was a problem with the sql server itself
      * @throws ClassNotFoundException if the jdbc class could not be found
      */
-    public static Connection getConnection() throws SQLException, ClassNotFoundException {
+    public static Connection setup() throws SQLException, ClassNotFoundException {
         Connection connection; //null will be returned if it could not be connected
 
         String driver = System.getenv("SQL_DRIVER");
@@ -53,6 +53,10 @@ public final class DatabaseUtil {
 
         Class.forName(driver);
         connection = DriverManager.getConnection(url, username, password);
+
+        if (connection != null){
+            createUsersTable(connection);
+        }
         return connection;
     }
 
@@ -65,7 +69,7 @@ public final class DatabaseUtil {
      * @param connection the connection to the database
      * @throws SQLException if there was a problem with the sql server itself.
      */
-    public static void createUsersTable(Connection connection) throws SQLException {
+    private static void createUsersTable(Connection connection) throws SQLException {
         // if users_table does not exist in the database, create it
         PreparedStatement create = connection.prepareStatement(
                 "CREATE TABLE IF NOT EXISTS " + USERS_TABLE + "("
@@ -76,8 +80,6 @@ public final class DatabaseUtil {
                         + GENDER + " VARCHAR(10) NOT NULL,"
                         + DATE_OF_REG + " DATETIME NOT NULL);");
         create.executeUpdate();
-//    set the last login time to an old date as the default value so the user won't get logged in automatically if
-//    they haven't logged in before
     }
 
     private static void makeFakeCookies(String phoneNumber) throws IOException {
