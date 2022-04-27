@@ -29,7 +29,7 @@ public class Main {
         // no need to close connection since the try is used like this
         try (Connection connection = getConnection()) {
             if (connection == null) {
-                System.err.println("Connection failed.");
+                System.out.println("Connection failed.");
                 return;
             }
             createUsersTable(connection);

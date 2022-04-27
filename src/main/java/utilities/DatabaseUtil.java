@@ -226,7 +226,7 @@ public final class DatabaseUtil {
             }
             else {// failed
                 // shouldn't happen but just in case
-                System.err.println("Account could not be created (executeUpdate returned number != 1)");
+                System.out.println("Account could not be created (executeUpdate returned number != 1)");
             }
         }
         else {
@@ -266,7 +266,7 @@ public final class DatabaseUtil {
                 }
                 else {
                     // shouldn't happen but just in case
-                    System.err.println("Account could not be deleted (executeUpdate returned number != 1)");
+                    System.out.println("Account could not be deleted (executeUpdate returned number != 1)");
                     Menus.doMainMenu();
                 }
             }
@@ -276,7 +276,7 @@ public final class DatabaseUtil {
             }
         }
         else {// there is no account to delete. Shouldn't work since the user is already logged in but oh well
-            System.err.println("Account not found. Delete failed");
+            System.out.println("Account not found. Delete failed");
             Menus.doMainMenu();
         }
     }
