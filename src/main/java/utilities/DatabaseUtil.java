@@ -1,9 +1,6 @@
 package utilities;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.sql.*;
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -54,7 +51,7 @@ public final class DatabaseUtil {
         Class.forName(driver);
         connection = DriverManager.getConnection(url, username, password);
 
-        if (connection != null){
+        if (connection != null) {
             createUsersTable(connection);
         }
         return connection;
@@ -92,7 +89,7 @@ public final class DatabaseUtil {
 
     private static boolean needsToLogin(String userPhoneNumber) {
         boolean needsToLogin = false;
-        try( BufferedReader fileReader = new BufferedReader(new FileReader(FAKE_COOKIE_FILENAME))) {
+        try (BufferedReader fileReader = new BufferedReader(new FileReader(FAKE_COOKIE_FILENAME))) {
             String cookieDetails = fileReader.readLine();
             String numberInCookie = cookieDetails.substring(0, userPhoneNumber.length());// numbers will be 10
             String dateInCookie = cookieDetails.substring(userPhoneNumber.length() + 1);
@@ -110,9 +107,8 @@ public final class DatabaseUtil {
             }
         }
         catch (Exception e) {// catching all exceptions because the file can be unpredictable
-
-            System.out.println("File could not be parsed because you decided to mess with " +
-                    FAKE_COOKIE_FILENAME + " ¯\\_༼ •́ ͜ʖ •̀ ༽_/¯");
+            needsToLogin = true;
+            System.out.println("Fake cookies not found.");
         }
         return needsToLogin;
     }
@@ -132,13 +128,10 @@ public final class DatabaseUtil {
         if (userCode.equals(code)) { // always true
             System.out.println("Account found, Log in successful");
 
-            // probably shouldn't use userCode
-            while (!userCode.equals("Y") && !userCode.equals("N")) {// confirm if the user wants to delete their account
-                System.out.print("Do you want to stay logged in for the next " + MAX_DAYS_FOR_LOGIN + " days? (y/n)?: ");
-                userCode = inputReader.readLine().toUpperCase().strip();
-            }
+            System.out.println("Do you want to stay logged in for the next " + MAX_DAYS_FOR_LOGIN + " days?: ");
+            char userInput = getYorNChoice(inputReader);
 
-            if (userCode.equals("Y")) {
+            if (userInput == 'Y') {
                 makeFakeCookies(userPhoneNumber);
                 System.out.println("You will be logged in for " + MAX_DAYS_FOR_LOGIN + " days");
             }
@@ -153,8 +146,14 @@ public final class DatabaseUtil {
         }
     }
 
-    private static char getYorNChoice() {
-        return ' ';
+    private static char getYorNChoice(BufferedReader inputReader) throws IOException {
+        char userInput = '\0';
+        while (userInput != 'Y' && userInput != 'N') {
+            System.out.print("Your response (y/n): ");
+            userInput = Character.toUpperCase((char) inputReader.read());
+            inputReader.readLine();// remove the newline
+        }
+        return userInput;
     }
 
     private static String addQuotes(String string) {
@@ -250,26 +249,18 @@ public final class DatabaseUtil {
     public static void deleteAccount(BufferedReader inputReader, Connection connection, String userPhoneNumber) throws IOException, SQLException {
         System.out.println("** Deleting an account **");
         if (numberExistsInDB(userPhoneNumber, connection)) {// there is an account to delete
-            String userInput = "";
-            while (!userInput.equals("Y") && !userInput.equals("N")) {// confirm if the user wants to delete their account
-                System.out.println("YOUR ACCOUNT CANNOT BE RECOVERED AFTER DELETION");
-                System.out.print("Are you sure you want to delete your account? This process is IRREVERSIBLE (y/n): ");
-                userInput = inputReader.readLine().toUpperCase().strip();
-            }
+            System.out.println("YOUR ACCOUNT CANNOT BE RECOVERED AFTER DELETION");
+            System.out.println("Are you sure you want to delete your account? This process is IRREVERSIBLE ");
 
-            if (userInput.equals("Y")) {// delete the account if confirmed
+            char userInput = getYorNChoice(inputReader);
+
+            if (userInput == 'Y') {// delete the account if confirmed
+                new File(FAKE_COOKIE_FILENAME).delete();
                 PreparedStatement deleteUser = connection.prepareStatement(
                         "DELETE FROM " + USERS_TABLE + " WHERE " + PHONE_NUMBER + " = " + addQuotes(userPhoneNumber) + ";");
-                // executeUpdate returns the amount of rows that was updated
-                if (deleteUser.executeUpdate() == 1) {// the account was deleted if the number of rows updated is 1
-                    System.out.println("Account deleted successfully");
-                    Menus.doMainMenu(connection);
-                }
-                else {
-                    // shouldn't happen but just in case
-                    System.out.println("Account could not be deleted (executeUpdate returned number != 1)");
-                    Menus.doMainMenu(connection);
-                }
+                deleteUser.executeUpdate();
+                System.out.println("Account deleted successfully");
+                Menus.doMainMenu(connection); // go back to main menu in both scenarios
             }
             else {// not confirmed, don't delete the account
                 System.out.println("Didn't confirm, account not deleted");
