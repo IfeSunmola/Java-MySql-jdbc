@@ -81,9 +81,10 @@ public final class DatabaseUtil {
 
     private static void makeFakeCookies(String phoneNumber) throws IOException {
         FileWriter cookies = new FileWriter(FAKE_COOKIE_FILENAME);
-        LocalDateTime dateTime = LocalDateTime.now().plus(Duration.of(10, ChronoUnit.MINUTES));
+        LocalDateTime dateTime = LocalDateTime.now().plus(Duration.of(MAX_DAYS_FOR_LOGIN, ChronoUnit.DAYS));
 
-        cookies.write(phoneNumber + " " + DATE_TIME_FORMATTER.format(dateTime));
+        cookies.write(phoneNumber + " " + DATE_TIME_FORMATTER.format(dateTime) + "\nWho is your favourite character in " +
+                "the last airbender? I like Toph.");
         cookies.close();
     }
 
