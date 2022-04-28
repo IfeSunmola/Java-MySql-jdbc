@@ -34,7 +34,8 @@ public final class DatabaseUtil {
     private static final int NUM_COLUMNS = 7;
 
     /**
-     * Method to connect to the database. The data needed (driver, url, etc.) is saved in environment variables.
+     * Method to connect to the database and create the table needed.
+     * The data needed (driver, url, etc.) is saved in environment variables.
      *
      * @return Connection object a connection was formed OR null if a connection could not be formed.
      * @throws SQLException           if there was a problem with the sql server itself
@@ -61,7 +62,6 @@ public final class DatabaseUtil {
 
     /**
      * Method to create a table for the users using the database connection.
-     * todo: make this private
      *
      * @param connection the connection to the database
      * @throws SQLException if there was a problem with the sql server itself.
@@ -79,30 +79,44 @@ public final class DatabaseUtil {
         create.executeUpdate();
     }
 
+    /**
+     * method to create a file that contains the date (and time) the user will need to log in next; so the user
+     * won't have to login everytime
+     * todo: login directly at the beginning of the program
+     *
+     * @throws IOException if the file could not be written to
+     */
     private static void makeFakeCookies(String phoneNumber) throws IOException {
-        FileWriter cookies = new FileWriter(FAKE_COOKIE_FILENAME);
-        LocalDateTime dateTime = LocalDateTime.now().plus(Duration.of(MAX_DAYS_FOR_LOGIN, ChronoUnit.DAYS));
+        FileWriter cookies = new FileWriter(FAKE_COOKIE_FILENAME);//create file
+        LocalDateTime dateTime = LocalDateTime.now().plus(Duration.of(MAX_DAYS_FOR_LOGIN, ChronoUnit.DAYS));// add days to it
 
         cookies.write(phoneNumber + " " + DATE_TIME_FORMATTER.format(dateTime) + "\nWho is your favourite character in " +
                 "the last airbender? I like Toph.");
         cookies.close();
     }
 
+    /**
+     * method to check if a user needs to log in. A user needs to log in if the current date >= the date in the
+     * cookies file. A user also needs to log in if the cookies file was not found
+     *
+     * @param userPhoneNumber the phone number of the user to login
+     * @return true if the user should log in or false if not.
+     */
     private static boolean needsToLogin(String userPhoneNumber) {
         boolean needsToLogin = false;
         try (BufferedReader fileReader = new BufferedReader(new FileReader(FAKE_COOKIE_FILENAME))) {
             String cookieDetails = fileReader.readLine();
-            String numberInCookie = cookieDetails.substring(0, userPhoneNumber.length());// numbers will be 10
+            String numberInCookie = cookieDetails.substring(0, userPhoneNumber.length());
             String dateInCookie = cookieDetails.substring(userPhoneNumber.length() + 1);
 
             LocalDateTime dateTimeFromFile = LocalDateTime.parse(dateInCookie, DATE_TIME_FORMATTER);
 
-            long elapsed = ChronoUnit.MINUTES.between(LocalDateTime.now(), dateTimeFromFile);
+            long timeElapsed = ChronoUnit.MINUTES.between(LocalDateTime.now(), dateTimeFromFile);
             if (!numberInCookie.equals(userPhoneNumber)) { // there's a cookie, but for another user
                 System.out.println("Invalid session. Cookie for another user detected");
                 needsToLogin = true;
             }
-            if (elapsed <= 0) {
+            else if (timeElapsed <= 0) {
                 System.out.println("Session has expired, log in again");
                 needsToLogin = true;
             }
@@ -114,6 +128,9 @@ public final class DatabaseUtil {
         return needsToLogin;
     }
 
+    /**
+     * method to log the user in by verifying them first (if needed)
+     * */
     private static void doLogin(BufferedReader inputReader, Connection connection, String userPhoneNumber) throws SQLException, IOException {
         System.out.println("You need to log in");
         String code = sendVerificationCode(userPhoneNumber); //returns the verification code that was sent
@@ -304,12 +321,13 @@ public final class DatabaseUtil {
         Menus.doMainMenu(connection);
     }
 
+    //misc
     private static String formatDateAndTime(String dateAndTimeOfReg) {
         LocalDateTime date = LocalDateTime.parse(dateAndTimeOfReg, DATE_TIME_FORMATTER);// convert the input to a DateTime
         DateTimeFormatter out = DateTimeFormatter.ofPattern("MMM dd, yyyy 'at' h:mm a"); // convert the DateTime to the needed to be output
         return date.format(out);
     }
-    //misc
+
 
     /**
      * Method to check if a phone number exists in the database
