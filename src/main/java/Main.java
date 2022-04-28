@@ -10,7 +10,6 @@ import static utilities.DatabaseUtil.*;
  * Todo:
  *  create account/log in with github
  *  change gender to show all options
- *  move createUsersTable to private class in DatabaseUtil
  *  login by password
  *  name should be in format Firstname
  *  change api keys to store in db
@@ -27,19 +26,15 @@ import static utilities.DatabaseUtil.*;
 public class Main {
     public static void main(String[] args) {
         // no need to close connection since the try is used like this
-        try (Connection connection = getConnection()) {
+        try (Connection connection = setup()) {
             if (connection == null) {
                 System.out.println("Connection failed.");
                 return;
             }
-            createUsersTable(connection);
-
-            Menus.doMainMenu();
+            Menus.doMainMenu(connection);
         }
         catch (IOException | SQLException | ClassNotFoundException e) {
             throw new RuntimeException(e);
         }
     }
-
-
 }

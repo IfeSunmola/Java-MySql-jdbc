@@ -1,9 +1,6 @@
 package utilities;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.sql.*;
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -37,13 +34,14 @@ public final class DatabaseUtil {
     private static final int NUM_COLUMNS = 7;
 
     /**
-     * Method to connect to the database. The data needed (driver, url, etc.) is saved in environment variables.
+     * Method to connect to the database and create the table needed.
+     * The data needed (driver, url, etc.) is saved in environment variables.
      *
      * @return Connection object a connection was formed OR null if a connection could not be formed.
      * @throws SQLException           if there was a problem with the sql server itself
      * @throws ClassNotFoundException if the jdbc class could not be found
      */
-    public static Connection getConnection() throws SQLException, ClassNotFoundException {
+    public static Connection setup() throws SQLException, ClassNotFoundException {
         Connection connection; //null will be returned if it could not be connected
 
         String driver = System.getenv("SQL_DRIVER");
@@ -53,6 +51,10 @@ public final class DatabaseUtil {
 
         Class.forName(driver);
         connection = DriverManager.getConnection(url, username, password);
+
+        if (connection != null) {
+            createUsersTable(connection);
+        }
         return connection;
     }
 
@@ -60,12 +62,11 @@ public final class DatabaseUtil {
 
     /**
      * Method to create a table for the users using the database connection.
-     * todo: make this private
      *
      * @param connection the connection to the database
      * @throws SQLException if there was a problem with the sql server itself.
      */
-    public static void createUsersTable(Connection connection) throws SQLException {
+    private static void createUsersTable(Connection connection) throws SQLException {
         // if users_table does not exist in the database, create it
         PreparedStatement create = connection.prepareStatement(
                 "CREATE TABLE IF NOT EXISTS " + USERS_TABLE + "("
@@ -76,46 +77,60 @@ public final class DatabaseUtil {
                         + GENDER + " VARCHAR(10) NOT NULL,"
                         + DATE_OF_REG + " DATETIME NOT NULL);");
         create.executeUpdate();
-//    set the last login time to an old date as the default value so the user won't get logged in automatically if
-//    they haven't logged in before
     }
 
+    /**
+     * method to create a file that contains the date (and time) the user will need to log in next; so the user
+     * won't have to login everytime
+     * todo: login directly at the beginning of the program
+     *
+     * @throws IOException if the file could not be written to
+     */
     private static void makeFakeCookies(String phoneNumber) throws IOException {
-        FileWriter cookies = new FileWriter(FAKE_COOKIE_FILENAME);
-        LocalDateTime dateTime = LocalDateTime.now().plus(Duration.of(10, ChronoUnit.MINUTES));
+        FileWriter cookies = new FileWriter(FAKE_COOKIE_FILENAME);//create file
+        LocalDateTime dateTime = LocalDateTime.now().plus(Duration.of(MAX_DAYS_FOR_LOGIN, ChronoUnit.DAYS));// add days to it
 
-        cookies.write(phoneNumber + " " + DATE_TIME_FORMATTER.format(dateTime));
+        cookies.write(phoneNumber + " " + DATE_TIME_FORMATTER.format(dateTime) + "\nWho is your favourite character in " +
+                "the last airbender? I like Toph.");
         cookies.close();
     }
 
-    private static boolean needsToLogin(String userPhoneNumber) throws IOException {
+    /**
+     * method to check if a user needs to log in. A user needs to log in if the current date >= the date in the
+     * cookies file. A user also needs to log in if the cookies file was not found
+     *
+     * @param userPhoneNumber the phone number of the user to login
+     * @return true if the user should log in or false if not.
+     */
+    private static boolean needsToLogin(String userPhoneNumber) {
         boolean needsToLogin = false;
-        try {
-            BufferedReader fileReader = new BufferedReader(new FileReader(FAKE_COOKIE_FILENAME));
+        try (BufferedReader fileReader = new BufferedReader(new FileReader(FAKE_COOKIE_FILENAME))) {
             String cookieDetails = fileReader.readLine();
-            String numberInCookie = cookieDetails.substring(0, userPhoneNumber.length());// numbers will be 10
+            String numberInCookie = cookieDetails.substring(0, userPhoneNumber.length());
             String dateInCookie = cookieDetails.substring(userPhoneNumber.length() + 1);
 
             LocalDateTime dateTimeFromFile = LocalDateTime.parse(dateInCookie, DATE_TIME_FORMATTER);
 
-            long elapsed = ChronoUnit.MINUTES.between(LocalDateTime.now(), dateTimeFromFile);
+            long timeElapsed = ChronoUnit.MINUTES.between(LocalDateTime.now(), dateTimeFromFile);
             if (!numberInCookie.equals(userPhoneNumber)) { // there's a cookie, but for another user
                 System.out.println("Invalid session. Cookie for another user detected");
                 needsToLogin = true;
             }
-            if (elapsed <= 0) {
+            else if (timeElapsed <= 0) {
                 System.out.println("Session has expired, log in again");
                 needsToLogin = true;
             }
         }
         catch (Exception e) {// catching all exceptions because the file can be unpredictable
-
-            System.out.println("File could not be parsed because you decided to mess with " +
-                    FAKE_COOKIE_FILENAME + " ¯\\_༼ •́ ͜ʖ •̀ ༽_/¯");
+            needsToLogin = true;
+            System.out.println("Fake cookies not found.");
         }
         return needsToLogin;
     }
 
+    /**
+     * method to log the user in by verifying them first (if needed)
+     * */
     private static void doLogin(BufferedReader inputReader, Connection connection, String userPhoneNumber) throws SQLException, IOException {
         System.out.println("You need to log in");
         String code = sendVerificationCode(userPhoneNumber); //returns the verification code that was sent
@@ -131,29 +146,32 @@ public final class DatabaseUtil {
         if (userCode.equals(code)) { // always true
             System.out.println("Account found, Log in successful");
 
-            // probably shouldn't use userCode
-            while (!userCode.equals("Y") && !userCode.equals("N")) {// confirm if the user wants to delete their account
-                System.out.print("Do you want to stay logged in for the next " + MAX_DAYS_FOR_LOGIN + " days? (y/n)?: ");
-                userCode = inputReader.readLine().toUpperCase().strip();
-            }
+            System.out.println("Do you want to stay logged in for the next " + MAX_DAYS_FOR_LOGIN + " days?: ");
+            char userInput = getYorNChoice(inputReader);
 
-            if (userCode.equals("Y")) {
+            if (userInput == 'Y') {
                 makeFakeCookies(userPhoneNumber);
                 System.out.println("You will be logged in for " + MAX_DAYS_FOR_LOGIN + " days");
             }
-            else if (userCode.equals("N")) {
+            else {
                 System.out.println("You will need to enter your password the next time you log in");
             }
-            Menus.doLoginMenu(userPhoneNumber);
+            Menus.doLoginMenu(connection, userPhoneNumber);
         }
         else {
             System.out.println("Wrong code. Log in failed.");
-            Menus.doMainMenu();
+            Menus.doMainMenu(connection);
         }
     }
 
-    private static char getYorNChoice() {
-        return ' ';
+    private static char getYorNChoice(BufferedReader inputReader) throws IOException {
+        char userInput = '\0';
+        while (userInput != 'Y' && userInput != 'N') {
+            System.out.print("Your response (y/n): ");
+            userInput = Character.toUpperCase((char) inputReader.read());
+            inputReader.readLine();// remove the newline
+        }
+        return userInput;
     }
 
     private static String addQuotes(String string) {
@@ -182,12 +200,12 @@ public final class DatabaseUtil {
             }
             else {// session has NOT timed out
                 System.out.println("Still in session, no need to log in.");
-                Menus.doLoginMenu(userPhoneNumber);
+                Menus.doLoginMenu(connection, userPhoneNumber);
             }
         }
         else { // user does not have an account
             System.out.println("Account not found. Log in failed");
-            Menus.doMainMenu();
+            Menus.doMainMenu(connection);
         }
     }
 
@@ -249,35 +267,27 @@ public final class DatabaseUtil {
     public static void deleteAccount(BufferedReader inputReader, Connection connection, String userPhoneNumber) throws IOException, SQLException {
         System.out.println("** Deleting an account **");
         if (numberExistsInDB(userPhoneNumber, connection)) {// there is an account to delete
-            String userInput = "";
-            while (!userInput.equals("Y") && !userInput.equals("N")) {// confirm if the user wants to delete their account
-                System.out.println("YOUR ACCOUNT CANNOT BE RECOVERED AFTER DELETION");
-                System.out.print("Are you sure you want to delete your account? This process is IRREVERSIBLE (y/n): ");
-                userInput = inputReader.readLine().toUpperCase().strip();
-            }
+            System.out.println("YOUR ACCOUNT CANNOT BE RECOVERED AFTER DELETION");
+            System.out.println("Are you sure you want to delete your account? This process is IRREVERSIBLE ");
 
-            if (userInput.equals("Y")) {// delete the account if confirmed
+            char userInput = getYorNChoice(inputReader);
+
+            if (userInput == 'Y') {// delete the account if confirmed
+                new File(FAKE_COOKIE_FILENAME).delete();
                 PreparedStatement deleteUser = connection.prepareStatement(
                         "DELETE FROM " + USERS_TABLE + " WHERE " + PHONE_NUMBER + " = " + addQuotes(userPhoneNumber) + ";");
-                // executeUpdate returns the amount of rows that was updated
-                if (deleteUser.executeUpdate() == 1) {// the account was deleted if the number of rows updated is 1
-                    System.out.println("Account deleted successfully");
-                    Menus.doMainMenu();
-                }
-                else {
-                    // shouldn't happen but just in case
-                    System.out.println("Account could not be deleted (executeUpdate returned number != 1)");
-                    Menus.doMainMenu();
-                }
+                deleteUser.executeUpdate();
+                System.out.println("Account deleted successfully");
+                Menus.doMainMenu(connection); // go back to main menu in both scenarios
             }
             else {// not confirmed, don't delete the account
                 System.out.println("Didn't confirm, account not deleted");
-                Menus.doLoginMenu(userPhoneNumber);
+                Menus.doLoginMenu(connection, userPhoneNumber);
             }
         }
         else {// there is no account to delete. Shouldn't work since the user is already logged in but oh well
             System.out.println("Account not found. Delete failed");
-            Menus.doMainMenu();
+            Menus.doMainMenu(connection);
         }
     }
 
@@ -290,7 +300,7 @@ public final class DatabaseUtil {
         System.out.println("Date of birth (Age): " + result.get(DATE_OF_BIRTH) + " (" + result.get(Age) + ")");
         System.out.println("Gender: " + result.get(GENDER));
         System.out.println("Date registered: " + formatDateAndTime(result.get(DATE_OF_REG)));
-        Menus.doLoginMenu(userPhoneNumber);
+        Menus.doLoginMenu(connection, userPhoneNumber);
     }
 
     private static HashMap<String, String> getUserDetails(Connection connection, String userPhoneNumber) throws SQLException {
@@ -306,17 +316,18 @@ public final class DatabaseUtil {
         return userDetails;
     }
 
-    public static void logout() throws SQLException, IOException {
+    public static void logout(Connection connection) throws SQLException, IOException {
         System.out.println("You are now logged out");
-        Menus.doMainMenu();
+        Menus.doMainMenu(connection);
     }
 
+    //misc
     private static String formatDateAndTime(String dateAndTimeOfReg) {
         LocalDateTime date = LocalDateTime.parse(dateAndTimeOfReg, DATE_TIME_FORMATTER);// convert the input to a DateTime
         DateTimeFormatter out = DateTimeFormatter.ofPattern("MMM dd, yyyy 'at' h:mm a"); // convert the DateTime to the needed to be output
         return date.format(out);
     }
-    //misc
+
 
     /**
      * Method to check if a phone number exists in the database

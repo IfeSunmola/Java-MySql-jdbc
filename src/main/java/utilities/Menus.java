@@ -11,18 +11,7 @@ import static utilities.UserInputUtil.showLoginMenu;
 import static utilities.UserInputUtil.showMainMenu;
 
 public class Menus {
-    private static final Connection CONNECTION;
-
-    static {
-        try {
-            CONNECTION = getConnection();
-        }
-        catch (SQLException | ClassNotFoundException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public static void doMainMenu() throws IOException, SQLException {
+    public static void doMainMenu(Connection connection) throws IOException, SQLException {
         BufferedReader inputReader = new BufferedReader(new InputStreamReader(System.in));
         boolean selectionWasValid = false;
         String userInput;
@@ -33,11 +22,11 @@ public class Menus {
             userInput = inputReader.readLine().strip();
             switch (userInput) {
                 case "1" -> {
-                    createAccount(inputReader, CONNECTION);
+                    createAccount(inputReader, connection);
                     selectionWasValid = true;
                 }
                 case "2" -> {
-                    login(inputReader, CONNECTION);
+                    login(inputReader, connection);
                     selectionWasValid = true;
                 }
                 case "0" -> {
@@ -51,7 +40,7 @@ public class Menus {
     }
 
     // menu that shows when the user has been logged in
-    public static void doLoginMenu(String userPhoneNumber) throws IOException, SQLException {
+    public static void doLoginMenu(Connection connection, String userPhoneNumber) throws IOException, SQLException {
         BufferedReader inputReader = new BufferedReader(new InputStreamReader(System.in));
         boolean selectionWasValid = false;
         String userInput;
@@ -61,16 +50,16 @@ public class Menus {
             userInput = inputReader.readLine().strip();
             switch (userInput) {
                 case "1" -> {
-                    showProfile(CONNECTION, userPhoneNumber);
+                    showProfile(connection, userPhoneNumber);
                     selectionWasValid = true;
                 }
                 case "2" -> {
-                    deleteAccount(inputReader, CONNECTION, userPhoneNumber);
+                    deleteAccount(inputReader, connection, userPhoneNumber);
                     selectionWasValid = true;
                 }
 
                 case "3" ->{
-                    logout();
+                    logout(connection);
                     selectionWasValid = true;
                 }
                 case "0" -> {
