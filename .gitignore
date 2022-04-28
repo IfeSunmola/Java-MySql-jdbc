@@ -1,12 +1,11 @@
+HELP.md
+target/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+### IntelliJ IDEA ###
 .idea
-out
-target
-src/main/java/TestClass.java
-src/main/java/dump
-JavaAndMySql.iml
-src/main/resources
-src/main/java/*.jar
-src/main/java/utilities/*.jar
-src/main/java/Manifest.txt
-fakeCookies.youWereHacked
-src/main/commands.sql
+*.iws
+*.iml
+*.ipr
